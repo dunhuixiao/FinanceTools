@@ -3,7 +3,7 @@
     <n-space vertical size="large">
       <n-card>
         <n-space vertical>
-          <n-text strong style="font-size: 24px">欢迎使用财务工具箱 🧰</n-text>
+          <n-text strong style="font-size: 24px">欢迎使用财务工具箱 📦</n-text>
           <n-text depth="3">提供各种财务相关的实用工具，提升工作效率</n-text>
         </n-space>
       </n-card>

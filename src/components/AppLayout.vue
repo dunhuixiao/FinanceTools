@@ -11,7 +11,7 @@
       @expand="collapsed = false"
     >
       <div class="logo-container">
-        <n-text strong style="font-size: 18px">{{ collapsed ? '🧰' : '🧰 财务工具箱' }}</n-text>
+        <n-text strong style="font-size: 18px">{{ collapsed ? '📦' : '📦 财务工具箱' }}</n-text>
       </div>
       
       <n-menu
