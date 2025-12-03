@@ -33,7 +33,7 @@
       </n-card>
 
       <!-- 空状态提示 -->
-      <div v-else style="text-align: center; padding: 100px 20px;">
+      <div v-else style="text-align: center; padding: 40px 20px; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
         <n-icon size="64" color="#e0e0e0" style="margin-bottom: 16px;">
           <DocumentTextOutline />
         </n-icon>

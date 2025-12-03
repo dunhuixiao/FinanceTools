@@ -64,7 +64,10 @@ export function extractInvoiceDataFromText(text) {
   
   try {
     console.log('[发票解析] 开始提取发票信息')
-    if (isDev) console.log('[发票解析] 原始文本:', text)
+    // 仅在开发模式下输出详细调试信息
+    if (isDev) {
+      console.log('[发票解析] 原始文本:', text)
+    }
     
     // 提取发票类型(文档开头的标题)
     const invoiceTypeMatch = text.match(/电子发票[（(]([^)）]+)[)）]/)
@@ -115,19 +118,31 @@ export function extractInvoiceDataFromText(text) {
       }
     }
     
-    // 提取价税合计(小写)
-    const smallWriteIndex = text.indexOf('(小写)')
-    if (smallWriteIndex !== -1) {
-      const afterSmallWrite = text.substring(smallWriteIndex)
-      // 找所有的金额(¥ 后面的数字)
-      const amounts = afterSmallWrite.match(/¥\s*([\d,.]+)/g)
-      if (amounts && amounts.length > 0) {
-        // 取最后一个金额作为价税合计
-        const lastAmount = amounts[amounts.length - 1]
-        const amountMatch = lastAmount.match(/¥\s*([\d,.]+)/)
+    // 提取价税合计(大小写两种形式)
+    const totalAmountPattern = /(价税合计|合\s*计)[:：\s]*[(（](大写|小写)[)）][:：\s]*[￥$¥]?\s*([\d,\.\s]+)/g
+    let match
+    while ((match = totalAmountPattern.exec(text)) !== null) {
+      // 获取金额部分并清理格式
+      const amountStr = match[3].replace(/\s+/g, '').replace(/,/g, '')
+      if (amountStr && !isNaN(parseFloat(amountStr))) {
+        data.totalAmount = amountStr
+        console.log('[发票解析] 价税合计:', data.totalAmount)
+        break // 找到第一个有效的金额就停止
+      }
+    }
+
+    // 如果上述方法未找到，则尝试备用方案
+    if (!data.totalAmount) {
+      // 查找文本末尾附近的金额
+      const endIndex = text.lastIndexOf('备注')
+      const searchText = endIndex > -1 ? text.substring(0, endIndex) : text
+      const amountMatches = searchText.match(/[￥$¥]\s*([\d,.]+)/g)
+      if (amountMatches && amountMatches.length > 0) {
+        const lastAmount = amountMatches[amountMatches.length - 1]
+        const amountMatch = lastAmount.match(/[￥$¥]\s*([\d,.]+)/)
         if (amountMatch) {
           data.totalAmount = amountMatch[1].replace(/,/g, '')
-          if (isDev) console.log('[发票解析] 价税合计:', data.totalAmount)
+          console.log('[发票解析] 价税合计(备用方案):', data.totalAmount)
         }
       }
     }
@@ -137,7 +152,10 @@ export function extractInvoiceDataFromText(text) {
     }
     
     console.log('[发票解析] 信息提取完成')
-    if (isDev) console.log('[发票解析] 提取结果:', data)
+    // 仅在开发模式下输出详细调试信息
+    if (isDev) {
+      console.log('[发票解析] 提取结果:', data)
+    }
     return data
   } catch (error) {
     console.error('[发票解析] 错误:', error)
