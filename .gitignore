@@ -12,7 +12,7 @@ dist-ssr/
 .DS_Store
 .idea/
 .vscode/
-.qoder/
+.qoder/quests
 
 # 日志文件
 *.log
