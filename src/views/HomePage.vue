@@ -62,11 +62,12 @@
 <script setup>
 import { NSpace, NCard, NText, NIcon, NGrid, NGridItem } from 'naive-ui'
 import { DocumentTextOutline, ConstructOutline } from '@vicons/ionicons5'
+import { useRouter } from 'vue-router'
 
-const emit = defineEmits(['navigate'])
+const router = useRouter()
 
 function handleToolClick(key) {
-  emit('navigate', key)
+  router.push(`/${key}`)
 }
 </script>
 

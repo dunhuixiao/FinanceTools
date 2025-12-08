@@ -1,0 +1,32 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import HomePage from '../views/HomePage.vue'
+import InvoiceRename from '../views/Home.vue'
+import NotFound from '../components/NotFound.vue'
+
+const routes = [
+  {
+    path: '/',
+    name: 'home',
+    component: HomePage,
+    meta: { title: '首页' }
+  },
+  {
+    path: '/invoice-rename',
+    name: 'invoice-rename',
+    component: InvoiceRename,
+    meta: { title: '发票重命名' }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: NotFound,
+    meta: { title: '页面未找到' }
+  }
+]
+
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes
+})
+
+export default router

@@ -16,7 +16,7 @@
         </div>
         
         <n-menu
-          :value="localActiveKey"
+          :value="activeKey"
           :collapsed="collapsed"
           :collapsed-width="64"
           :collapsed-icon-size="22"
@@ -27,7 +27,7 @@
       
       <n-layout class="content-layout">
         <n-layout-header bordered class="header">
-          <div>
+          <div class="header-left">
             <n-breadcrumb v-if="breadcrumbs.length > 0" separator="/" style="margin-bottom: 4px;">
               <n-breadcrumb-item 
                 v-for="item in breadcrumbs" 
@@ -36,8 +36,8 @@
                 @click="item.clickable && handleBreadcrumbClick(item.key)"
               >
                 <span :style="{
-                  color: item.clickable ? '#409EFF' : (item.key === props.activeKey ? '#303133' : '#909399'),
-                  fontWeight: item.key === props.activeKey ? 'bold' : 'normal',
+                  color: item.clickable ? '#409EFF' : (item.key === activeKey ? '#303133' : '#909399'),
+                  fontWeight: item.key === activeKey ? 'bold' : 'normal',
                   cursor: item.clickable ? 'pointer' : 'default',
                   fontSize: '14px'
                 }">
@@ -47,17 +47,48 @@
             </n-breadcrumb>
             <n-text strong style="font-size: 20px">{{ currentTitle }}</n-text>
           </div>
-          <n-icon 
-            size="24" 
-            class="github-icon"
-            @click="handleGithubClick"
-          >
-            <LogoGithub />
-          </n-icon>
+
+          <div class="header-right">
+            <!-- 暗黑模式按钮 -->
+            <n-tooltip placement="bottom" trigger="hover">
+              <template #trigger>
+                <n-button 
+                  quaternary 
+                  circle
+                  class="icon-btn"
+                  @click="handleDarkModeClick"
+                >
+                  <template #icon>
+                    <n-icon size="18">
+                      <MoonOutline v-if="!localIsDark" />
+                      <SunnyOutline v-else />
+                    </n-icon>
+                  </template>
+                </n-button>
+              </template>
+              {{ localIsDark ? '浅色模式' : '深色模式' }}
+            </n-tooltip>
+
+            <!-- GitHub 链接 -->
+            <n-tooltip placement="bottom" trigger="hover">
+              <template #trigger>
+                <n-button quaternary circle class="icon-btn" @click="handleGithubClick">
+                  <template #icon>
+                    <n-icon size="18">
+                      <LogoGithub />
+                    </n-icon>
+                  </template>
+                </n-button>
+              </template>
+              GitHub
+            </n-tooltip>
+          </div>
         </n-layout-header>
         
         <n-layout-content class="content">
           <slot></slot>
+          <!-- 回到顶部按钮 -->
+          <n-back-top :right="40" :bottom="80" />
         </n-layout-content>
       </n-layout>
     </n-layout>
@@ -66,7 +97,7 @@
     <n-layout-footer bordered class="footer">
       <n-text depth="3" class="copyright-text">
         Copyright © 2025 - present 
-        <a href="https://github.com/dunhuixiao" target="_blank" class="author-link">Sora</a>
+        <a href="https://github.com/dunhuixiao" target="_blank" rel="noopener noreferrer" class="author-link">Sora</a>
       </n-text>
     </n-layout-footer>
   </div>
@@ -74,43 +105,55 @@
 
 <script setup>
 import { ref, computed, h, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import {
   NLayout,
   NLayoutSider,
   NLayoutHeader,
   NLayoutContent,
+  NLayoutFooter,
   NMenu,
   NText,
-  NSpace,
   NIcon,
   NBreadcrumb,
-  NBreadcrumbItem
+  NBreadcrumbItem,
+  NBackTop,
+  NTooltip,
+  NButton
 } from 'naive-ui'
 import {
   DocumentTextOutline,
   HomeOutline,
-  LogoGithub
+  LogoGithub,
+  MoonOutline,
+  SunnyOutline
 } from '@vicons/ionicons5'
 
 const props = defineProps({
-  activeKey: {
-    type: String,
-    default: 'home'
+  isDark: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['update:activeKey'])
+const emit = defineEmits(['update:isDark'])
 
-// 将handleMenuSelect函数暴露给模板
-defineExpose({
-  handleMenuSelect
-})
+const route = useRoute()
+const router = useRouter()
 
 const collapsed = ref(false)
-const localActiveKey = ref(props.activeKey)
+const localIsDark = ref(props.isDark)
 
-watch(() => props.activeKey, (val) => {
-  localActiveKey.value = val
+// 根据路由计算当前激活的菜单项
+const activeKey = computed(() => {
+  const path = route.path
+  if (path === '/' || path === '/home') return 'home'
+  if (path === '/invoice-rename') return 'invoice-rename'
+  return 'home'
+})
+
+watch(() => props.isDark, (val) => {
+  localIsDark.value = val
 })
 
 const menuOptions = [
@@ -135,7 +178,7 @@ const menuOptions = [
 const currentTitle = computed(() => {
   const findTitle = (options) => {
     for (const option of options) {
-      if (option.key === props.activeKey) {
+      if (option.key === activeKey.value) {
         return option.label
       }
       if (option.children) {
@@ -151,7 +194,7 @@ const currentTitle = computed(() => {
 // 构建面包屑导航
 const breadcrumbs = computed(() => {
   // 首页不显示面包屑
-  if (props.activeKey === 'home') {
+  if (activeKey.value === 'home') {
     return []
   }
 
@@ -169,7 +212,7 @@ const breadcrumbs = computed(() => {
     return null
   }
 
-  const path = findPath(menuOptions, props.activeKey)
+  const path = findPath(menuOptions, activeKey.value)
   if (!path) return []
 
   // 添加首页到路径开头
@@ -190,21 +233,28 @@ function renderIcon(icon) {
 }
 
 function handleMenuSelect(key) {
-  // 只有当点击的不是当前激活的菜单项时才触发事件
-  if (key !== props.activeKey) {
-    emit('update:activeKey', key)
+  // 根据 key 跳转到对应路由
+  if (key === 'home') {
+    router.push('/')
+  } else if (key === 'invoice-rename') {
+    router.push('/invoice-rename')
   }
 }
 
 function handleBreadcrumbClick(key) {
-  // 只有当点击的不是当前激活的菜单项时才触发事件
-  if (key !== props.activeKey) {
-    emit('update:activeKey', key)
+  // 点击面包屑时跳转
+  if (key === 'home') {
+    router.push('/')
   }
 }
 
 function handleGithubClick() {
-  window.open('https://github.com/dunhuixiao/FinanceTools', '_blank')
+  window.open('https://github.com/dunhuixiao/FinanceTools', '_blank', 'noopener,noreferrer')
+}
+
+function handleDarkModeClick() {
+  localIsDark.value = !localIsDark.value
+  emit('update:isDark', localIsDark.value)
 }
 </script>
 
@@ -218,7 +268,7 @@ function handleGithubClick() {
 
 .main-layout {
   flex: 1;
-  min-height: 0; /* 防止子元素超出容器 */
+  min-height: 0;
 }
 
 .content-layout {
@@ -236,14 +286,25 @@ function handleGithubClick() {
   flex-shrink: 0;
 }
 
-/* GitHub图标悬停效果 */
-.github-icon {
-  cursor: pointer;
-  transition: color 0.3s ease;
+.header-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.github-icon:hover {
-  color: #409EFF; /* 悬停时变为蓝色 */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 图标按钮统一样式 */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .content {
@@ -259,7 +320,6 @@ function handleGithubClick() {
   align-items: center;
   justify-content: center;
   padding: 0 24px;
-  border-bottom: 1px solid #efeff5;
 }
 
 .footer {
@@ -267,15 +327,12 @@ function handleGithubClick() {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: white; /* 改为白色背景 */
-  flex-shrink: 0; /* 防止页脚被压缩 */
-  border-top: 1px solid #efeff5; /* 添加顶部边框作为分隔线 */
+  flex-shrink: 0;
 }
 
 .copyright-text {
   font-size: 12px;
   text-align: center;
-  color: #909399; /* 使用与页面其他文本一致的颜色 */
 }
 
 .author-link {
