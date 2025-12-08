@@ -12,21 +12,33 @@
 <script setup lang="ts">
 import { h } from 'vue'
 import { NDataTable, NTag, NButton, NInput } from 'naive-ui'
+import type { DataTableColumns } from 'naive-ui'
 
-const props = defineProps({
-  data: {
-    type: Array,
-    default: () => []
-  },
-  selectedIds: {
-    type: Array,
-    default: () => []
-  }
-})
+type RowKey = string | number
 
-const emit = defineEmits(['update:selectedIds', 'edit', 'delete'])
+interface InvoiceRow {
+  id: string
+  originalFileName: string
+  invoiceType: string
+  purchaserName: string
+  totalAmount: string
+  newFileName: string
+  status: 'success' | 'failed' | 'pending'
+  errorMessage: string
+}
 
-const columns: any = [
+const props = defineProps<{
+  data: InvoiceRow[]
+  selectedIds: string[]
+}>()
+
+const emit = defineEmits<{
+  'update:selectedIds': [keys: RowKey[]]
+  'edit': [id: string, updates: any]
+  'delete': [id: string]
+}>()
+
+const columns: DataTableColumns<InvoiceRow> = [
   {
     type: 'selection'
   },
@@ -34,7 +46,7 @@ const columns: any = [
     title: '序号',
     key: 'index',
     width: 80,
-    render: (_, index) => {
+    render: (_: InvoiceRow, index: number) => {
       return index + 1
     }
   },
@@ -61,11 +73,11 @@ const columns: any = [
     ellipsis: {
       tooltip: true
     },
-    render: (row) => {
+    render: (row: InvoiceRow) => {
       return h(NInput, {
         value: row.purchaserName,
         size: 'small',
-        onUpdateValue: (value) => {
+        onUpdateValue: (value: string) => {
           emit('edit', row.id, { purchaserName: value })
         }
       })
@@ -75,11 +87,11 @@ const columns: any = [
     title: '金额',
     key: 'totalAmount',
     width: 120,
-    render: (row) => {
+    render: (row: InvoiceRow) => {
       return h(NInput, {
         value: row.totalAmount,
         size: 'small',
-        onUpdateValue: (value) => {
+        onUpdateValue: (value: string) => {
           emit('edit', row.id, { totalAmount: value })
         }
       })
@@ -92,11 +104,11 @@ const columns: any = [
     ellipsis: {
       tooltip: true
     },
-    render: (row) => {
+    render: (row: InvoiceRow) => {
       return h(NInput, {
         value: row.newFileName,
         size: 'small',
-        onUpdateValue: (value) => {
+        onUpdateValue: (value: string) => {
           emit('edit', row.id, { newFileName: value })
         }
       })
@@ -106,14 +118,14 @@ const columns: any = [
     title: '状态',
     key: 'status',
     width: 100,
-    render: (row) => {
-      const statusMap = {
+    render: (row: InvoiceRow) => {
+      const statusMap: Record<string, { type: 'success' | 'error' | 'warning', text: string }> = {
         success: { type: 'success', text: '成功' },
         failed: { type: 'error', text: '失败' },
         pending: { type: 'warning', text: '待处理' }
       }
       const status = statusMap[row.status] || statusMap.pending
-      return h(NTag, { type: status.type, size: 'small' }, { default: () => status.text })
+      return h(NTag, { type: status.type as any, size: 'small' }, { default: () => status.text })
     }
   },
   {
@@ -123,7 +135,7 @@ const columns: any = [
     ellipsis: {
       tooltip: true
     },
-    render: (row) => {
+    render: (row: InvoiceRow) => {
       if (row.status === 'failed' && row.errorMessage) {
         return h('span', { style: 'color: #f56c6c; font-size: 12px;' }, row.errorMessage)
       }
@@ -135,7 +147,7 @@ const columns: any = [
     key: 'actions',
     width: 100,
     fixed: 'right',
-    render: (row) => {
+    render: (row: InvoiceRow) => {
       return h(
         NButton,
         {
@@ -155,7 +167,7 @@ const pagination = {
   pageSizes: [10, 20, 50, 100]
 }
 
-function handleCheck(keys: any) {
+function handleCheck(keys: RowKey[]) {
   emit('update:selectedIds', keys)
 }
 </script>
