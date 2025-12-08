@@ -60,13 +60,13 @@
                 >
                   <template #icon>
                     <n-icon size="18">
-                      <MoonOutline v-if="!localIsDark" />
+                      <MoonOutline v-if="!props.isDark" />
                       <SunnyOutline v-else />
                     </n-icon>
                   </template>
                 </n-button>
               </template>
-              {{ localIsDark ? '浅色模式' : '深色模式' }}
+              {{ props.isDark ? '浅色模式' : '深色模式' }}
             </n-tooltip>
 
             <!-- GitHub 链接 -->
@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, h, watch } from 'vue'
+import { ref, computed, h } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   NLayout,
@@ -142,7 +142,6 @@ const route = useRoute()
 const router = useRouter()
 
 const collapsed = ref(false)
-const localIsDark = ref(props.isDark)
 
 // 根据路由计算当前激活的菜单项
 const activeKey = computed(() => {
@@ -150,10 +149,6 @@ const activeKey = computed(() => {
   if (path === '/' || path === '/home') return 'home'
   if (path === '/invoice-rename') return 'invoice-rename'
   return 'home'
-})
-
-watch(() => props.isDark, (val) => {
-  localIsDark.value = val
 })
 
 const menuOptions = [
@@ -253,8 +248,7 @@ function handleGithubClick() {
 }
 
 function handleDarkModeClick() {
-  localIsDark.value = !localIsDark.value
-  emit('update:isDark', localIsDark.value)
+  emit('update:isDark', !props.isDark)
 }
 </script>
 
