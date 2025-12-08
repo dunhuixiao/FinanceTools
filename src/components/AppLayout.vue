@@ -56,17 +56,17 @@
                   quaternary 
                   circle
                   class="icon-btn"
-                  @click="handleDarkModeClick"
+                  @click="toggleTheme"
                 >
                   <template #icon>
                     <n-icon size="18">
-                      <MoonOutline v-if="!props.isDark" />
+                      <MoonOutline v-if="!isDark" />
                       <SunnyOutline v-else />
                     </n-icon>
                   </template>
                 </n-button>
               </template>
-              {{ props.isDark ? '浅色模式' : '深色模式' }}
+              {{ isDark ? '浅色模式' : '深色模式' }}
             </n-tooltip>
 
             <!-- GitHub 链接 -->
@@ -128,15 +128,9 @@ import {
   MoonOutline,
   SunnyOutline
 } from '@vicons/ionicons5'
+import { useTheme } from '../composables/useTheme'
 
-const props = defineProps({
-  isDark: {
-    type: Boolean,
-    default: false
-  }
-})
-
-const emit = defineEmits(['update:isDark'])
+const { isDark, toggleTheme } = useTheme()
 
 const route = useRoute()
 const router = useRouter()
@@ -245,10 +239,6 @@ function handleBreadcrumbClick(key: string) {
 
 function handleGithubClick() {
   window.open('https://github.com/dunhuixiao/FinanceTools', '_blank', 'noopener,noreferrer')
-}
-
-function handleDarkModeClick() {
-  emit('update:isDark', !props.isDark)
 }
 </script>
 

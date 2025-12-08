@@ -1,15 +1,10 @@
 <template>
-  <n-config-provider
-    :theme="isDark ? darkTheme : null"
-    :theme-overrides="computedThemeOverrides"
-  >
+  <n-config-provider :theme="naiveTheme" :theme-overrides="themeOverrides">
+    <n-global-style />
     <n-message-provider>
       <n-dialog-provider>
         <n-notification-provider>
-          <AppLayout
-            :is-dark="isDark"
-            @update:is-dark="handleUpdateIsDark"
-          >
+          <AppLayout>
             <router-view />
           </AppLayout>
         </n-notification-provider>
@@ -19,55 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { darkTheme, NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider } from 'naive-ui'
+import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider, NGlobalStyle } from 'naive-ui'
 import AppLayout from './components/AppLayout.vue'
+import { useTheme } from './composables/useTheme'
 
-const STORAGE_KEY = 'finance-tools-theme'
-
-// 读取本地存储
-let initialDark = false
-if (typeof window !== 'undefined') {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-    if (typeof saved.isDark === 'boolean') initialDark = saved.isDark
-  } catch (e) {
-    // ignore
-  }
-}
-
-const isDark = ref(initialDark)
-
-const computedThemeOverrides = computed(() => ({
-  common: {
-    primaryColor: '#409EFF',
-    primaryColorHover: '#66b1ff',
-    primaryColorPressed: '#3a8ee6',
-    successColor: '#67C23A',
-    warningColor: '#E6A23C',
-    errorColor: '#F56C6C',
-    infoColor: '#909399'
-  }
-}))
-
-watch(
-  isDark,
-  () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          isDark: isDark.value
-        })
-      )
-    }
-  },
-  { deep: true }
-)
-
-function handleUpdateIsDark(val: boolean) {
-  isDark.value = val
-}
+// 初始化主题，并获取主题配置
+const { naiveTheme, themeOverrides } = useTheme()
 </script>
 
 <style>
@@ -86,4 +38,6 @@ body {
 #app {
   min-height: 100vh;
 }
+
+
 </style>
