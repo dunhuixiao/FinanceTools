@@ -103,7 +103,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, h, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -176,7 +176,7 @@ const menuOptions = [
 ]
 
 const currentTitle = computed(() => {
-  const findTitle = (options) => {
+  const findTitle = (options: any[]): string | null => {
     for (const option of options) {
       if (option.key === activeKey.value) {
         return option.label
@@ -199,7 +199,7 @@ const breadcrumbs = computed(() => {
   }
 
   // 查找当前项及其父级路径
-  const findPath = (options, targetKey, path = []) => {
+  const findPath = (options: any[], targetKey: string, path: any[] = []): any[] | null => {
     for (const option of options) {
       if (option.key === targetKey) {
         return [...path, option]
@@ -218,7 +218,7 @@ const breadcrumbs = computed(() => {
   // 添加首页到路径开头
   const fullPath = [
     { label: '🏠 首页', key: 'home', clickable: true },
-    ...path.map((item, index) => ({
+    ...path.map((item: any, index: number) => ({
       label: index === 0 ? `📄 ${item.label}` : item.label, // 仅为第一层（发票工具）添加emoji
       key: item.key,
       clickable: false // 分组和当前页不可点击
@@ -228,11 +228,11 @@ const breadcrumbs = computed(() => {
   return fullPath
 })
 
-function renderIcon(icon) {
+function renderIcon(icon: any) {
   return () => h(NIcon, null, { default: () => h(icon) })
 }
 
-function handleMenuSelect(key) {
+function handleMenuSelect(key: string) {
   // 根据 key 跳转到对应路由
   if (key === 'home') {
     router.push('/')
@@ -241,7 +241,7 @@ function handleMenuSelect(key) {
   }
 }
 
-function handleBreadcrumbClick(key) {
+function handleBreadcrumbClick(key: string) {
   // 点击面包屑时跳转
   if (key === 'home') {
     router.push('/')

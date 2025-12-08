@@ -1,17 +1,31 @@
 /**
  * 文件导出组合式函数
  */
-import { ref } from 'vue'
+import { ref, Ref } from 'vue'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
 
+interface InvoiceItem {
+  status: string
+  newFileName: string
+  originalFileName: string
+  originalFile: File
+}
+
+interface ExportResult {
+  success: boolean
+  fileCount?: number
+  fileName?: string
+  error?: string
+}
+
 export function useFileExport() {
-  const isExporting = ref(false)
+  const isExporting: Ref<boolean> = ref(false)
   
   /**
    * 导出文件为 ZIP
    */
-  async function exportAsZip(invoiceList, exportAll = false) {
+  async function exportAsZip(invoiceList: InvoiceItem[], exportAll = false): Promise<ExportResult> {
     isExporting.value = true
     
     try {
@@ -51,7 +65,7 @@ export function useFileExport() {
     } catch (error) {
       return {
         success: false,
-        error: error.message
+        error: (error as Error).message
       }
     } finally {
       isExporting.value = false
@@ -61,7 +75,7 @@ export function useFileExport() {
   /**
    * 格式化日期为字符串
    */
-  function formatDate(date) {
+  function formatDate(date: Date): string {
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')

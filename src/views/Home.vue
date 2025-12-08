@@ -63,7 +63,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import {
   NText,
@@ -92,12 +92,12 @@ const { isExporting, exportAsZip } = useFileExport()
 
 const showProgressModal = ref(false)
 const parseProgress = ref(0)
-const uploadQueue = ref([])
+const uploadQueue = ref<File[]>([])
 
 /**
  * 处理文件上传
  */
-async function handleFileUpload(file) {
+async function handleFileUpload(file: File) {
   // 验证文件
   const validation = validateFile(file)
   if (!validation.valid) {
@@ -143,7 +143,7 @@ async function processUploadQueue() {
       parseProgress.value = Math.round((processed / totalFiles) * 100)
     } catch (error) {
       console.error('文件处理失败:', error)
-      message.error(`文件 ${file.name} 处理失败: ${error.message}`)
+      message.error(`文件 ${file.name} 处理失败: ${(error as Error).message}`)
     }
   }
 
@@ -157,14 +157,14 @@ async function processUploadQueue() {
 /**
  * 编辑发票信息
  */
-function handleEdit(id, updates) {
+function handleEdit(id: string, updates: any) {
   store.updateFile(id, updates)
 }
 
 /**
  * 删除单个文件
  */
-function handleDelete(id) {
+function handleDelete(id: string) {
   dialog.warning({
     title: '确认删除',
     content: '确定要删除这个文件吗？',
@@ -210,7 +210,7 @@ async function handleExport() {
       message.error(`导出失败: ${result.error}`)
     }
   } catch (error) {
-    message.error(`导出失败: ${error.message}`)
+    message.error(`导出失败: ${(error as Error).message}`)
   }
 }
 </script>

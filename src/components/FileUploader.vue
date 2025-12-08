@@ -24,20 +24,20 @@
   </n-upload>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { NUpload, NUploadDragger, NIcon, NText, NP } from 'naive-ui'
 import { CloudUploadOutline } from '@vicons/ionicons5'
 
 const emit = defineEmits(['upload'])
 
-function handleUpload({ file, onFinish, onError }) {
+function handleUpload({ file, onFinish }: any) {
   // 自定义上传逻辑，实际上我们不上传到服务器
   // 只是触发文件处理
   emit('upload', file.file)
   onFinish()
 }
 
-function handleChange({ fileList }) {
+function handleChange() {
   // 可以在这里处理文件列表变化
 }
 </script>

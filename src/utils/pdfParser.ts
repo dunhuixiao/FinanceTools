@@ -10,10 +10,25 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
 // 判断是否为开发环境
 const isDev = import.meta.env.DEV
 
+interface InvoiceData {
+  invoiceType: string | null
+  invoiceCode: string | null
+  purchaserName: string | null
+  sellerName: string | null
+  totalAmount: string | null
+  issueDate: string | null
+}
+
+interface ValidationResult {
+  valid: boolean
+  errors: string[]
+  data?: InvoiceData
+}
+
 /**
  * 从 PDF 文件提取文本
  */
-export async function extractTextFromPDF(file) {
+export async function extractTextFromPDF(file: File): Promise<string> {
   try {
     console.log('[PDF解析] 开始读取文件')
     if (isDev) console.log('[PDF解析] 文件名:', file.name)
@@ -32,7 +47,7 @@ export async function extractTextFromPDF(file) {
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const textContent = await page.getTextContent()
-      const pageText = textContent.items.map(item => item.str).join(' ')
+      const pageText = textContent.items.map((item: any) => item.str).join(' ')
       fullText += pageText + '\n'
     }
     
@@ -45,15 +60,15 @@ export async function extractTextFromPDF(file) {
     return fullText
   } catch (error) {
     console.error('[PDF解析] 错误:', error)
-    throw new Error(`PDF 文本提取失败: ${error.message}`)
+    throw new Error(`PDF 文本提取失败: ${(error as Error).message}`)
   }
 }
 
 /**
  * 从 PDF 文本中提取发票信息
  */
-export function extractInvoiceDataFromText(text) {
-  const data = {
+export function extractInvoiceDataFromText(text: string): InvoiceData {
+  const data: InvoiceData = {
     invoiceType: null,
     invoiceCode: null,
     purchaserName: null,
@@ -159,32 +174,32 @@ export function extractInvoiceDataFromText(text) {
     return data
   } catch (error) {
     console.error('[发票解析] 错误:', error)
-    throw new Error(`发票信息提取失败: ${error.message}`)
+    throw new Error(`发票信息提取失败: ${(error as Error).message}`)
   }
 }
 
 /**
  * 解析 PDF 发票文件
  */
-export async function parsePDFInvoice(file) {
+export async function parsePDFInvoice(file: File): Promise<InvoiceData> {
   try {
     const text = await extractTextFromPDF(file)
     const data = extractInvoiceDataFromText(text)
     return data
   } catch (error) {
-    throw new Error(`PDF 发票解析失败: ${error.message}`)
+    throw new Error(`PDF 发票解析失败: ${(error as Error).message}`)
   }
 }
 
 /**
  * 读取文件为 ArrayBuffer
  */
-function readFileAsArrayBuffer(file) {
+function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     
     reader.onload = (e) => {
-      resolve(e.target.result)
+      resolve(e.target!.result as ArrayBuffer)
     }
     
     reader.onerror = () => {
@@ -198,8 +213,8 @@ function readFileAsArrayBuffer(file) {
 /**
  * 验证 PDF 发票数据
  */
-export function validatePDFInvoiceData(data) {
-  const errors = []
+export function validatePDFInvoiceData(data: InvoiceData): ValidationResult {
+  const errors: string[] = []
   
   // 只验证命名规则需要的必填字段：购买方名称和金额
   if (!data.purchaserName) {
@@ -221,6 +236,7 @@ export function validatePDFInvoiceData(data) {
   
   return {
     valid: errors.length === 0,
-    errors
+    errors,
+    data
   }
 }

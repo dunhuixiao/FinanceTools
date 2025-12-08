@@ -2,19 +2,71 @@
  * 发票数据状态管理
  */
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, Ref, ComputedRef } from 'vue'
 import { generateFileName } from '@/utils/nameGenerator'
 
 // 判断是否为开发环境
 const isDev = import.meta.env.DEV
 
-export const useInvoiceStore = defineStore('invoice', () => {
+interface InvoiceData {
+  invoiceType?: string
+  purchaserName?: string
+  totalAmount?: string
+  [key: string]: any
+}
+
+interface ParseResult {
+  success: boolean
+  data: InvoiceData | null
+  errors: string[]
+}
+
+interface InvoiceItem {
+  id: string
+  originalFile: File
+  originalFileName: string
+  invoiceType: string
+  purchaserName: string
+  totalAmount: string
+  newFileName: string
+  status: 'pending' | 'success' | 'failed'
+  errorMessage: string
+}
+
+interface InvoiceStore {
   // 状态
-  const fileList = ref([])
-  const filterStatus = ref('all')
-  const searchKeyword = ref('')
-  const selectedIds = ref([])
-  const isProcessing = ref(false)
+  fileList: Ref<InvoiceItem[]>
+  filterStatus: Ref<string>
+  searchKeyword: Ref<string>
+  selectedIds: Ref<string[]>
+  isProcessing: Ref<boolean>
+  
+  // 计算属性
+  filteredList: ComputedRef<InvoiceItem[]>
+  successCount: ComputedRef<number>
+  failedCount: ComputedRef<number>
+  totalCount: ComputedRef<number>
+  
+  // 方法
+  addFile: (file: File, parseResult: ParseResult) => InvoiceItem
+  updateFile: (id: string, updates: Partial<InvoiceItem>) => void
+  removeFile: (id: string) => void
+  removeFiles: (ids: string[]) => void
+  clearAll: () => void
+  toggleSelection: (id: string) => void
+  selectAll: () => void
+  clearSelection: () => void
+  setFilterStatus: (status: string) => void
+  setSearchKeyword: (keyword: string) => void
+}
+
+export const useInvoiceStore = defineStore('invoice', (): InvoiceStore => {
+  // 状态
+  const fileList: Ref<InvoiceItem[]> = ref([])
+  const filterStatus: Ref<string> = ref('all')
+  const searchKeyword: Ref<string> = ref('')
+  const selectedIds: Ref<string[]> = ref([])
+  const isProcessing: Ref<boolean> = ref(false)
   
   // 计算属性
   const filteredList = computed(() => {
@@ -51,7 +103,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
   })
   
   // 方法
-  function addFile(file, parseResult) {
+  function addFile(file: File, parseResult: ParseResult): InvoiceItem {
     const id = generateId()
     const originalFileName = file.name
     const originalExtension = originalFileName.substring(originalFileName.lastIndexOf('.'))
@@ -60,18 +112,18 @@ export const useInvoiceStore = defineStore('invoice', () => {
     if (isDev) console.log('[Store] 文件名:', originalFileName, '解析结果:', parseResult)
     
     let newFileName = ''
-    let status = 'pending'
+    let status: 'pending' | 'success' | 'failed' = 'pending'
     let errorMessage = ''
     
     if (parseResult.success) {
       try {
-        newFileName = generateFileName(parseResult.data, originalExtension)
+        newFileName = generateFileName(parseResult.data as any, originalExtension)
         status = 'success'
         console.log('[Store] 文件名生成成功')
         if (isDev) console.log('[Store] 新文件名:', newFileName)
       } catch (error) {
         status = 'failed'
-        errorMessage = error.message
+        errorMessage = (error as Error).message
         console.error('[Store] 文件名生成失败:', error)
       }
     } else {
@@ -80,7 +132,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
       console.log('[Store] 解析失败:', errorMessage)
     }
     
-    const invoiceItem = {
+    const invoiceItem: InvoiceItem = {
       id,
       originalFile: file,
       originalFileName,
@@ -98,7 +150,7 @@ export const useInvoiceStore = defineStore('invoice', () => {
     return invoiceItem
   }
   
-  function updateFile(id, updates) {
+  function updateFile(id: string, updates: Partial<InvoiceItem>): void {
     const index = fileList.value.findIndex(item => item.id === id)
     if (index !== -1) {
       fileList.value[index] = { ...fileList.value[index], ...updates }
@@ -111,19 +163,19 @@ export const useInvoiceStore = defineStore('invoice', () => {
           const newFileName = generateFileName({
             purchaserName: item.purchaserName,
             totalAmount: item.totalAmount
-          }, originalExtension)
+          } as any, originalExtension)
           fileList.value[index].newFileName = newFileName
           fileList.value[index].status = 'success'
           fileList.value[index].errorMessage = ''
         } catch (error) {
           fileList.value[index].status = 'failed'
-          fileList.value[index].errorMessage = error.message
+          fileList.value[index].errorMessage = (error as Error).message
         }
       }
     }
   }
   
-  function removeFile(id) {
+  function removeFile(id: string): void {
     const index = fileList.value.findIndex(item => item.id === id)
     if (index !== -1) {
       fileList.value.splice(index, 1)
@@ -136,16 +188,16 @@ export const useInvoiceStore = defineStore('invoice', () => {
     }
   }
   
-  function removeFiles(ids) {
+  function removeFiles(ids: string[]): void {
     ids.forEach(id => removeFile(id))
   }
   
-  function clearAll() {
+  function clearAll(): void {
     fileList.value = []
     selectedIds.value = []
   }
   
-  function toggleSelection(id) {
+  function toggleSelection(id: string): void {
     const index = selectedIds.value.indexOf(id)
     if (index === -1) {
       selectedIds.value.push(id)
@@ -154,23 +206,23 @@ export const useInvoiceStore = defineStore('invoice', () => {
     }
   }
   
-  function selectAll() {
+  function selectAll(): void {
     selectedIds.value = filteredList.value.map(item => item.id)
   }
   
-  function clearSelection() {
+  function clearSelection(): void {
     selectedIds.value = []
   }
   
-  function setFilterStatus(status) {
+  function setFilterStatus(status: string): void {
     filterStatus.value = status
   }
   
-  function setSearchKeyword(keyword) {
+  function setSearchKeyword(keyword: string): void {
     searchKeyword.value = keyword
   }
   
-  function generateId() {
+  function generateId(): string {
     return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   }
   

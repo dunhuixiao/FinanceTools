@@ -3,8 +3,31 @@
  */
 import { XMLParser } from 'fast-xml-parser'
 
+interface ParserOptions {
+  ignoreAttributes: boolean
+  attributeNamePrefix: string
+  textNodeName: string
+  ignoreDeclaration: boolean
+  parseAttributeValue: boolean
+  trimValues: boolean
+}
+
+interface InvoiceData {
+  invoiceType: string | null
+  invoiceCode: string | null
+  purchaserName: string | null
+  sellerName: string | null
+  totalAmount: string | null
+  issueDate: string | null
+}
+
+interface ValidationResult {
+  valid: boolean
+  errors: string[]
+}
+
 // XML 解析器配置
-const parserOptions = {
+const parserOptions: ParserOptions = {
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   textNodeName: '#text',
@@ -16,32 +39,32 @@ const parserOptions = {
 /**
  * 解析 XML 文件
  */
-export async function parseXMLFile(file) {
+export async function parseXMLFile(file: File): Promise<any> {
   try {
     const text = await readFileAsText(file)
     return parseXMLText(text)
   } catch (error) {
-    throw new Error(`XML 文件读取失败: ${error.message}`)
+    throw new Error(`XML 文件读取失败: ${(error as Error).message}`)
   }
 }
 
 /**
  * 解析 XML 文本
  */
-export function parseXMLText(xmlText) {
+export function parseXMLText(xmlText: string): any {
   try {
     const parser = new XMLParser(parserOptions)
     const result = parser.parse(xmlText)
     return result
   } catch (error) {
-    throw new Error(`XML 解析失败: ${error.message}`)
+    throw new Error(`XML 解析失败: ${(error as Error).message}`)
   }
 }
 
 /**
  * 从 XML 数据中提取发票信息
  */
-export function extractInvoiceData(xmlData) {
+export function extractInvoiceData(xmlData: any): InvoiceData {
   try {
     // 这里需要根据实际的 XML 结构来提取数据
     // 暂时返回一个通用的提取逻辑，实际使用时可能需要调整
@@ -57,14 +80,14 @@ export function extractInvoiceData(xmlData) {
       issueDate: extractField(invoice, ['IssueDate', 'Date', 'InvoiceDate'])
     }
   } catch (error) {
-    throw new Error(`发票信息提取失败: ${error.message}`)
+    throw new Error(`发票信息提取失败: ${(error as Error).message}`)
   }
 }
 
 /**
  * 尝试从多个可能的字段名中提取值
  */
-function extractField(obj, fieldNames) {
+function extractField(obj: any, fieldNames: string[]): string | null {
   for (const name of fieldNames) {
     if (obj && obj[name] !== undefined && obj[name] !== null) {
       return String(obj[name]).trim()
@@ -76,12 +99,12 @@ function extractField(obj, fieldNames) {
 /**
  * 读取文件为文本
  */
-function readFileAsText(file) {
+function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     
     reader.onload = (e) => {
-      resolve(e.target.result)
+      resolve(e.target!.result as string)
     }
     
     reader.onerror = () => {
@@ -95,8 +118,8 @@ function readFileAsText(file) {
 /**
  * 验证必填字段
  */
-export function validateInvoiceData(data) {
-  const errors = []
+export function validateInvoiceData(data: InvoiceData): ValidationResult {
+  const errors: string[] = []
   
   if (!data.invoiceType) {
     errors.push('缺少发票类型')

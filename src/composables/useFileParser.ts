@@ -1,18 +1,25 @@
 /**
  * 文件解析组合式函数
  */
-import { ref } from 'vue'
+import { ref, Ref } from 'vue'
 import { parseXMLFile, extractInvoiceData, validateInvoiceData } from '@/utils/xmlParser'
 import { parsePDFInvoice, validatePDFInvoiceData } from '@/utils/pdfParser'
 
+interface ParseResult {
+  success: boolean
+  data: any
+  errors: string[]
+  type: 'pdf' | 'xml' | 'unknown'
+}
+
 export function useFileParser() {
-  const isProcessing = ref(false)
-  const progress = ref(0)
+  const isProcessing: Ref<boolean> = ref(false)
+  const progress: Ref<number> = ref(0)
   
   /**
    * 解析单个文件
    */
-  async function parseFile(file) {
+  async function parseFile(file: File): Promise<ParseResult> {
     const isPDF = file.name.toLowerCase().endsWith('.pdf')
     const isXML = file.name.toLowerCase().endsWith('.xml')
     
@@ -52,7 +59,7 @@ export function useFileParser() {
       return {
         success: false,
         data: null,
-        errors: [error.message],
+        errors: [(error as Error).message],
         type: isPDF ? 'pdf' : isXML ? 'xml' : 'unknown'
       }
     }
@@ -61,11 +68,11 @@ export function useFileParser() {
   /**
    * 批量解析文件
    */
-  async function parseFiles(files, onProgress) {
+  async function parseFiles(files: File[], onProgress?: (progress: number) => void): Promise<ParseResult[]> {
     isProcessing.value = true
     progress.value = 0
     
-    const results = []
+    const results: ParseResult[] = []
     const batchSize = 10 // 每批处理 10 个文件
     
     for (let i = 0; i < files.length; i += batchSize) {

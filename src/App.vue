@@ -18,7 +18,7 @@
   </n-config-provider>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { darkTheme, NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider } from 'naive-ui'
 import AppLayout from './components/AppLayout.vue'
@@ -65,7 +65,7 @@ watch(
   { deep: true }
 )
 
-function handleUpdateIsDark(val) {
+function handleUpdateIsDark(val: boolean) {
   isDark.value = val
 }
 </script>

@@ -9,9 +9,9 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { h } from 'vue'
-import { NDataTable, NTag, NButton, NInput, NSpace, NCheckbox } from 'naive-ui'
+import { NDataTable, NTag, NButton, NInput } from 'naive-ui'
 
 const props = defineProps({
   data: {
@@ -26,7 +26,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:selectedIds', 'edit', 'delete'])
 
-const columns = [
+const columns: any = [
   {
     type: 'selection'
   },
@@ -155,7 +155,7 @@ const pagination = {
   pageSizes: [10, 20, 50, 100]
 }
 
-function handleCheck(keys) {
+function handleCheck(keys: any) {
   emit('update:selectedIds', keys)
 }
 </script>

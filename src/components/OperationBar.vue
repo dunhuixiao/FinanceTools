@@ -52,7 +52,7 @@
   </n-space>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import { NSpace, NRadioGroup, NRadioButton, NInput, NButton, NIcon } from 'naive-ui'
 import { SearchOutline } from '@vicons/ionicons5'
@@ -108,11 +108,11 @@ watch(() => props.searchKeyword, (val) => {
   localSearchKeyword.value = val
 })
 
-function handleFilterChange(value) {
+function handleFilterChange(value: string) {
   emit('update:filterStatus', value)
 }
 
-function handleSearchChange(value) {
+function handleSearchChange(value: string) {
   emit('update:searchKeyword', value)
 }
 </script>

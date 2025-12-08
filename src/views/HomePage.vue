@@ -59,14 +59,14 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { NSpace, NCard, NText, NIcon, NGrid, NGridItem } from 'naive-ui'
 import { DocumentTextOutline, ConstructOutline } from '@vicons/ionicons5'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-function handleToolClick(key) {
+function handleToolClick(key: string) {
   router.push(`/${key}`)
 }
 </script>

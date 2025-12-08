@@ -2,11 +2,36 @@
  * 文件名生成工具
  */
 
+interface NamingRule {
+  template: string
+  separator: string
+  fields: string[]
+}
+
+interface InvoiceData {
+  invoiceType?: string
+  invoiceCode?: string
+  purchaserName?: string
+  sellerName?: string
+  totalAmount?: string
+  issueDate?: string
+  originalFileName: string
+}
+
+interface GenerateResult {
+  success: boolean
+  fileName?: string
+  error?: string
+  originalFileName: string
+}
+
+type FieldFormatter = (value: any) => string
+
 // 当前启用的规则
 let CURRENT_RULE = 'purchaser_amount'
 
 // 命名规则定义（开发者可新增）
-const NAMING_RULES = {
+const NAMING_RULES: Record<string, NamingRule> = {
   // 当前规则：购方名称_金额
   purchaser_amount: {
     template: '{purchaserName}_{totalAmount}',
@@ -37,9 +62,9 @@ const NAMING_RULES = {
 /**
  * 字段格式化器
  */
-const fieldFormatters = {
+const fieldFormatters: Record<string, FieldFormatter> = {
   // 购买方名称格式化
-  purchaserName: (value) => {
+  purchaserName: (value: any): string => {
     if (!value) return ''
     
     let formatted = String(value).trim()
@@ -56,7 +81,7 @@ const fieldFormatters = {
   },
   
   // 发票类型格式化
-  invoiceType: (value) => {
+  invoiceType: (value: any): string => {
     if (!value) return ''
     
     let formatted = String(value).trim()
@@ -71,7 +96,7 @@ const fieldFormatters = {
   },
   
   // 价税合计格式化
-  totalAmount: (value) => {
+  totalAmount: (value: any): string => {
     if (!value) return ''
     
     const num = parseFloat(value)
@@ -83,7 +108,7 @@ const fieldFormatters = {
   },
   
   // 开票日期格式化
-  issueDate: (value) => {
+  issueDate: (value: any): string => {
     if (!value) return ''
     
     // 格式化为 YYYYMMDD
@@ -101,13 +126,13 @@ const fieldFormatters = {
   },
   
   // 发票号码格式化
-  invoiceCode: (value) => {
+  invoiceCode: (value: any): string => {
     if (!value) return ''
     return String(value).trim()
   },
   
   // 销售方名称格式化
-  sellerName: (value) => {
+  sellerName: (value: any): string => {
     return fieldFormatters.purchaserName(value)
   }
 }
@@ -115,7 +140,7 @@ const fieldFormatters = {
 /**
  * 生成文件名
  */
-export function generateFileName(invoiceData, originalExtension) {
+export function generateFileName(invoiceData: InvoiceData, originalExtension: string): string {
   const rule = NAMING_RULES[CURRENT_RULE]
   
   if (!rule) {
@@ -123,10 +148,10 @@ export function generateFileName(invoiceData, originalExtension) {
   }
   
   // 格式化各个字段
-  const formattedData = {}
+  const formattedData: Record<string, string> = {}
   for (const field of rule.fields) {
     const formatter = fieldFormatters[field]
-    formattedData[field] = formatter ? formatter(invoiceData[field]) : invoiceData[field] || ''
+    formattedData[field] = formatter ? formatter((invoiceData as any)[field]) : (invoiceData as any)[field] || ''
   }
   
   // 检查必填字段
@@ -147,7 +172,7 @@ export function generateFileName(invoiceData, originalExtension) {
 /**
  * 处理文件名冲突
  */
-export function handleFileNameConflict(fileName, existingNames) {
+export function handleFileNameConflict(fileName: string, existingNames: string[]): string {
   let finalName = fileName
   let counter = 1
   
@@ -168,9 +193,9 @@ export function handleFileNameConflict(fileName, existingNames) {
 /**
  * 批量生成文件名（处理冲突）
  */
-export function generateFileNames(invoiceDataList) {
-  const existingNames = []
-  const results = []
+export function generateFileNames(invoiceDataList: InvoiceData[]): GenerateResult[] {
+  const existingNames: string[] = []
+  const results: GenerateResult[] = []
   
   for (const item of invoiceDataList) {
     try {
@@ -190,7 +215,7 @@ export function generateFileNames(invoiceDataList) {
     } catch (error) {
       results.push({
         success: false,
-        error: error.message,
+        error: (error as Error).message,
         originalFileName: item.originalFileName
       })
     }
@@ -202,7 +227,7 @@ export function generateFileNames(invoiceDataList) {
 /**
  * 切换命名规则（开发者使用）
  */
-export function setCurrentRule(ruleName) {
+export function setCurrentRule(ruleName: string): void {
   if (!NAMING_RULES[ruleName]) {
     throw new Error(`命名规则 ${ruleName} 不存在`)
   }
@@ -212,13 +237,13 @@ export function setCurrentRule(ruleName) {
 /**
  * 获取当前规则
  */
-export function getCurrentRule() {
+export function getCurrentRule(): string {
   return CURRENT_RULE
 }
 
 /**
  * 获取所有可用规则
  */
-export function getAvailableRules() {
+export function getAvailableRules(): string[] {
   return Object.keys(NAMING_RULES)
 }
