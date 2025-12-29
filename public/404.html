@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>重定向中...</title>
+  <script>
+    // GitHub Pages SPA 重定向解决方案
+    (function() {
+      var l = window.location;
+      // 保存完整路径（包括查询参数和 hash）
+      sessionStorage.redirect = l.pathname + l.search + l.hash;
+      // 重定向到应用根路径 /FinanceTools/
+      l.replace(l.origin + '/FinanceTools/');
+    })();
+  </script>
+</head>
+<body>
+  <div style="text-align: center; padding: 50px; font-family: sans-serif;">
+    <h2>正在跳转...</h2>
+    <p>如果页面没有自动跳转，请点击 <a href="/FinanceTools/">这里</a> 返回首页</p>
+  </div>
+</body>
+</html>

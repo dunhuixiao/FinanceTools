@@ -1,0 +1,307 @@
+/**
+ * 数据导出Composable
+ * 支持Excel和JSON格式导出
+ */
+import { ref } from 'vue'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
+import { InvoiceParseResult } from '../stores/invoiceParsing'
+
+// 判断是否为开发环境
+const isDev = import.meta.env.DEV
+
+// 导出结果
+export interface ExportResult {
+  success: boolean
+  recordCount?: number
+  fileName?: string
+  error?: string
+}
+
+// JSON格式化后的发票数据（移除不可序列化字段）
+export interface InvoiceJSONFormat {
+  id: string
+  fileName: string
+  invoiceNumber?: string
+  invoiceType?: string
+  amount?: string
+  taxAmount?: string
+  totalAmount?: string
+  taxRates?: Array<{ rate: string; amount?: string; index: number }>
+  status: string
+  errorMessage?: string
+  parseTime: string
+}
+
+/**
+ * 数据导出Composable
+ */
+export function useDataExport() {
+  const isExporting = ref(false)
+  
+  /**
+   * 导出为Excel
+   */
+  async function exportToExcel(
+    data: InvoiceParseResult[],
+    filename: string
+  ): Promise<ExportResult> {
+    const startTime = isDev ? performance.now() : 0
+    
+    if (isDev) {
+      console.log('[数据导出] 开始导出Excel:', data.length, '条记录')
+    }
+    
+    isExporting.value = true
+    
+    try {
+      if (data.length === 0) {
+        throw new Error('没有可导出的数据')
+      }
+      
+      // 计算最大税率数量
+      const maxTaxRateCount = Math.max(
+        ...data.map(item => item.taxRates?.length || 0),
+        1
+      )
+      
+      // 生成表头
+      const headers = generateExcelHeaders(maxTaxRateCount)
+      
+      // 转换数据为二维数组
+      const rows = transformDataForExcel(data, maxTaxRateCount)
+      
+      // 创建工作表
+      const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows])
+      
+      // 设置列宽
+      worksheet['!cols'] = [
+        { wch: 8 },   // 序号
+        { wch: 30 },  // 文件名
+        { wch: 22 },  // 发票号码
+        { wch: 10 },  // 发票类型
+        { wch: 15 },  // 金额
+        { wch: 15 },  // 税额
+        { wch: 15 },  // 价税合计
+        ...Array(maxTaxRateCount).fill({ wch: 12 }), // 税率列
+        { wch: 10 },  // 状态
+        { wch: 30 }   // 失败原因
+      ]
+      
+      // 创建工作簿
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, '发票解析结果')
+      
+      // 生成Excel文件
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      
+      // 生成文件名（带时间戳）
+      const timestamp = formatTimestamp(new Date())
+      const fullFilename = `${filename}_${timestamp}.xlsx`
+      
+      // 触发下载
+      saveAs(blob, fullFilename)
+      
+      if (isDev) {
+        const endTime = performance.now()
+        console.log(`[性能] Excel导出: ${data.length}条记录, 耗时: ${((endTime - startTime) / 1000).toFixed(2)}s`)
+      } else {
+        console.log('[数据导出] Excel导出完成')
+      }
+      
+      return {
+        success: true,
+        recordCount: data.length,
+        fileName: fullFilename
+      }
+    } catch (error) {
+      console.error('[数据导出] Excel导出失败:', (error as Error).message)
+      return {
+        success: false,
+        error: (error as Error).message
+      }
+    } finally {
+      isExporting.value = false
+    }
+  }
+  
+  /**
+   * 导出为JSON
+   */
+  async function exportToJSON(
+    data: InvoiceParseResult[],
+    filename: string
+  ): Promise<ExportResult> {
+    const startTime = isDev ? performance.now() : 0
+    
+    if (isDev) {
+      console.log('[数据导出] 开始导出JSON:', data.length, '条记录')
+    }
+    
+    isExporting.value = true
+    
+    try {
+      if (data.length === 0) {
+        throw new Error('没有可导出的数据')
+      }
+      
+      // 转换数据为JSON格式（移除不可序列化字段）
+      const jsonData = transformDataForJSON(data)
+      
+      // 格式化JSON（缩进2空格）
+      const jsonString = JSON.stringify(jsonData, null, 2)
+      
+      // 创建Blob
+      const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' })
+      
+      // 生成文件名（带时间戳）
+      const timestamp = formatTimestamp(new Date())
+      const fullFilename = `${filename}_${timestamp}.json`
+      
+      // 触发下载
+      saveAs(blob, fullFilename)
+      
+      if (isDev) {
+        const endTime = performance.now()
+        console.log(`[性能] JSON导出: ${data.length}条记录, 耗时: ${((endTime - startTime) / 1000).toFixed(2)}s`)
+      } else {
+        console.log('[数据导出] JSON导出完成')
+      }
+      
+      return {
+        success: true,
+        recordCount: data.length,
+        fileName: fullFilename
+      }
+    } catch (error) {
+      console.error('[数据导出] JSON导出失败:', (error as Error).message)
+      return {
+        success: false,
+        error: (error as Error).message
+      }
+    } finally {
+      isExporting.value = false
+    }
+  }
+  
+  /**
+   * 统一导出接口
+   */
+  async function exportData(
+    data: InvoiceParseResult[],
+    format: 'excel' | 'json',
+    filename: string = '发票解析结果'
+  ): Promise<ExportResult> {
+    if (format === 'excel') {
+      return exportToExcel(data, filename)
+    } else {
+      return exportToJSON(data, filename)
+    }
+  }
+  
+  return {
+    isExporting,
+    exportToExcel,
+    exportToJSON,
+    exportData
+  }
+}
+
+/**
+ * 生成Excel表头
+ */
+function generateExcelHeaders(maxTaxRateCount: number): string[] {
+  const headers = [
+    '序号',
+    '文件名',
+    '发票号码',
+    '发票类型',
+    '金额',
+    '税额',
+    '价税合计'
+  ]
+  
+  // 添加动态税率列
+  for (let i = 1; i <= maxTaxRateCount; i++) {
+    headers.push(`税率${i}`)
+  }
+  
+  headers.push('状态', '失败原因')
+  
+  return headers
+}
+
+/**
+ * 将数据转换为Excel二维数组格式
+ */
+function transformDataForExcel(
+  data: InvoiceParseResult[],
+  maxTaxRateCount: number
+): any[][] {
+  return data.map((item, index) => {
+    const row: any[] = [
+      index + 1,
+      item.fileName,
+      item.invoiceNumber || '-',
+      item.invoiceType || '-',
+      item.amount || '-',
+      item.taxAmount || '-',
+      item.totalAmount || '-'
+    ]
+    
+    // 添加税率列
+    for (let i = 1; i <= maxTaxRateCount; i++) {
+      if (item.taxRates && item.taxRates.length >= i) {
+        row.push(item.taxRates[i - 1].rate)
+      } else {
+        row.push('-')
+      }
+    }
+    
+    // 添加状态和失败原因
+    const statusMap: Record<string, string> = {
+      success: '成功',
+      failed: '失败',
+      pending: '待处理'
+    }
+    row.push(statusMap[item.status] || '未知')
+    row.push(item.errorMessage || '-')
+    
+    return row
+  })
+}
+
+/**
+ * 将数据转换为JSON格式（移除不可序列化字段）
+ */
+function transformDataForJSON(data: InvoiceParseResult[]): InvoiceJSONFormat[] {
+  return data.map(item => ({
+    id: item.id,
+    fileName: item.fileName,
+    invoiceNumber: item.invoiceNumber,
+    invoiceType: item.invoiceType,
+    amount: item.amount,
+    taxAmount: item.taxAmount,
+    totalAmount: item.totalAmount,
+    taxRates: item.taxRates,
+    status: item.status,
+    errorMessage: item.errorMessage,
+    parseTime: item.parseTime
+    // 不包含 originalFile 字段
+  }))
+}
+
+/**
+ * 格式化时间戳
+ */
+function formatTimestamp(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  
+  return `${year}${month}${day}_${hours}${minutes}${seconds}`
+}
