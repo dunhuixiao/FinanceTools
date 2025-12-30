@@ -6,6 +6,7 @@
     :row-key="row => row.id"
     :scroll-x="1448"
     @update:checked-row-keys="handleCheck"
+    class="invoice-rename-table"
   />
 </template>
 
@@ -13,19 +14,9 @@
 import { h, ref } from 'vue'
 import { NDataTable, NTag, NButton, NInput } from 'naive-ui'
 import type { DataTableColumns, PaginationProps } from 'naive-ui'
+import type { InvoiceRow } from '@/types'
 
 type RowKey = string | number
-
-interface InvoiceRow {
-  id: string
-  originalFileName: string
-  invoiceType: string
-  purchaserName: string
-  totalAmount: string
-  newFileName: string
-  status: 'success' | 'failed' | 'pending'
-  errorMessage: string
-}
 
 const props = defineProps<{
   data: InvoiceRow[]
@@ -179,3 +170,44 @@ function handleCheck(keys: RowKey[]) {
   emit('update:selectedIds', keys)
 }
 </script>
+
+<style scoped>
+/* 表格整体样式优化 */
+.invoice-rename-table {
+  border: none;
+}
+
+/* 表头样式 */
+.invoice-rename-table :deep(.n-data-table-th) {
+  background-color: #F9FAFB !important;
+  border-bottom: 2px solid #E5E7EB !important;
+  padding: 1rem 0.75rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  color: #6B7280 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-right: none !important;
+}
+
+/* 表格行样式 */
+.invoice-rename-table :deep(.n-data-table-td) {
+  padding: 1rem 0.75rem !important;
+  border-bottom: 1px solid #F3F4F6 !important;
+  border-right: none !important;
+}
+
+/* Hover效果 */
+.invoice-rename-table :deep(.n-data-table-tr:hover .n-data-table-td) {
+  background-color: #F3F4F6 !important;
+  transition: background-color 0.2s;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .invoice-rename-table :deep(.n-data-table-td),
+  .invoice-rename-table :deep(.n-data-table-th) {
+    padding: 0.75rem 0.5rem !important;
+  }
+}
+</style>

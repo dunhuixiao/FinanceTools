@@ -21,7 +21,9 @@
           :collapsed-width="64"
           :collapsed-icon-size="22"
           :options="menuOptions"
+          :expanded-keys="expandedKeys"
           @update:value="handleMenuSelect"
+          @update:expanded-keys="handleExpandedKeysUpdate"
         />
       </n-layout-sider>
       
@@ -128,7 +130,7 @@ import {
   MoonOutline,
   SunnyOutline
 } from '@vicons/ionicons5'
-import { useTheme } from '../composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 
 const { isDark, toggleTheme } = useTheme()
 
@@ -136,6 +138,8 @@ const route = useRoute()
 const router = useRouter()
 
 const collapsed = ref(false)
+// 控制菜单展开的 key 列表，默认展开「发票工具」
+const expandedKeys = ref<string[]>(['invoice-tools'])
 
 // 根据路由计算当前激活的菜单项
 const activeKey = computed(() => {
@@ -162,7 +166,7 @@ const menuOptions = [
         key: 'invoice-rename'
       },
       {
-        label: '📊 发票解析',
+        label: '📋 发票解析',
         key: 'invoice-parsing'
       }
     ]
@@ -246,6 +250,10 @@ function handleBreadcrumbClick(key: string) {
 
 function handleGithubClick() {
   window.open('https://github.com/dunhuixiao/FinanceTools', '_blank', 'noopener,noreferrer')
+}
+
+function handleExpandedKeysUpdate(keys: string[]) {
+  expandedKeys.value = keys
 }
 </script>
 

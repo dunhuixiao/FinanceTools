@@ -3,7 +3,12 @@
     <!-- 上传区域 -->
     <n-space vertical :size="24">
       <n-card title="上传发票文件" size="small">
-        <FileUploader @upload="handleFileUpload" />
+        <FileUploaderBatch
+          accept=".pdf"
+          :disabled="store.isProcessing"
+          description="支持 PDF 格式的发票文件，单个文件不超过 10MB，最多 100 个文件"
+          @upload="handleFileUpload"
+        />
       </n-card>
 
       <!-- 操作栏和数据表格 -->
@@ -80,9 +85,9 @@ import { useInvoiceStore } from '@/stores/invoice'
 import { useFileParser } from '@/composables/useFileParser'
 import { useFileExport } from '@/composables/useFileExport'
 import { validateFile } from '@/utils/fileValidator'
-import FileUploader from '@/components/FileUploader.vue'
-import OperationBar from '@/components/OperationBar.vue'
-import InvoiceTable from '@/components/InvoiceTable.vue'
+import FileUploaderBatch from '@/components/Upload/FileUploaderBatch.vue'
+import OperationBar from '@/components/Common/OperationBar.vue'
+import InvoiceTable from '@/components/Invoice/InvoiceTable.vue'
 
 const store = useInvoiceStore()
 const message = useMessage()
@@ -97,16 +102,37 @@ const uploadQueue = ref<File[]>([])
 /**
  * 处理文件上传
  */
-async function handleFileUpload(file: File) {
-  // 验证文件
-  const validation = validateFile(file)
-  if (!validation.valid) {
-    message.error(validation.errors.join('; '))
+async function handleFileUpload(files: File[]) {
+  // 批量验证文件
+  const validationErrors: string[] = []
+  const validFiles: File[] = []
+
+  for (const file of files) {
+    const validation = validateFile(file)
+    if (!validation.valid) {
+      validationErrors.push(`${file.name}: ${validation.errors.join('; ')}`)
+    } else {
+      validFiles.push(file)
+    }
+  }
+
+  // 显示验证错误
+  if (validationErrors.length > 0) {
+    message.error(`部分文件验证失败：\n${validationErrors.join('\n')}`, {
+      duration: 5000
+    })
+  }
+
+  // 如果没有有效文件，直接返回
+  if (validFiles.length === 0) {
+    if (validationErrors.length === files.length) {
+      message.warning('所有文件验证失败，请检查文件格式和大小')
+    }
     return
   }
 
   // 添加到队列
-  uploadQueue.value.push(file)
+  uploadQueue.value.push(...validFiles)
 
   // 如果不在处理中，开始处理
   if (!store.isProcessing) {

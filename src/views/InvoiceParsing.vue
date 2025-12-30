@@ -137,8 +137,8 @@ import {
   useDialog
 } from 'naive-ui'
 import { SearchOutline, DocumentTextOutline, ChevronDownOutline } from '@vicons/ionicons5'
-import FileUploaderBatch from '../components/FileUploaderBatch.vue'
-import InvoiceParsingTable from '../components/InvoiceParsingTable.vue'
+import FileUploaderBatch from '../components/Upload/FileUploaderBatch.vue'
+import InvoiceParsingTable from '../components/Invoice/InvoiceParsingTable.vue'
 import { useInvoiceParsingStore } from '../stores/invoiceParsing'
 import { useInvoicePdfParser } from '../composables/useInvoicePdfParser'
 import { useDataExport } from '../composables/useDataExport'

@@ -1,9 +1,12 @@
 /**
  * 发票PDF解析Composable
  * 提供批量解析能力和进度反馈
+ * 支持基于坐标的智能解析 + 降级为正则解析
  */
 import { ref, Ref } from 'vue'
 import {
+  extractTextWithCoordinates,
+  extractInvoiceFieldsWithCoordinates,
   extractTextFromPDF,
   extractInvoiceFields,
   validateInvoiceData
@@ -32,7 +35,7 @@ export function useInvoicePdfParser() {
   const currentFile = ref('')
   
   /**
-   * 单个文件解析
+   * 单个文件解析(支持坐标解析 + 降级机制)
    */
   async function parseInvoice(file: File): Promise<InvoiceParseResult> {
     const id = generateId()
@@ -48,11 +51,17 @@ export function useInvoicePdfParser() {
         throw new Error('文件大小超过限制（最大10MB）')
       }
       
-      // 提取文本
-      const text = await extractTextFromPDF(file)
-      
-      // 提取字段
-      const fields = extractInvoiceFields(text)
+      // 尝试坐标解析(新方法)
+      let fields
+      try {
+        const pages = await extractTextWithCoordinates(file)
+        fields = extractInvoiceFieldsWithCoordinates(pages)
+      } catch (coordError) {
+        // 降级为纯文本解析
+        console.warn('[发票解析] 坐标解析失败,降级为正则解析:', (coordError as Error).message)
+        const text = await extractTextFromPDF(file)
+        fields = extractInvoiceFields(text)
+      }
       
       // 验证数据
       const dataValidation = validateInvoiceData(fields)

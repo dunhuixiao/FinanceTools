@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import HomePage from '../views/HomePage.vue'
-import InvoiceRename from '../views/Home.vue'
+import InvoiceRename from '../views/InvoiceRename.vue'
 import InvoiceParsing from '../views/InvoiceParsing.vue'
-import NotFound from '../components/NotFound.vue'
+import NotFound from '../components/Common/NotFound.vue'
 
 const routes: RouteRecordRaw[] = [
   {

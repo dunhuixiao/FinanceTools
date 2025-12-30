@@ -17,7 +17,7 @@
           >
             <n-space vertical align="center">
               <n-icon size="48" color="#409EFF">
-                <DocumentTextOutline />
+                <CreateOutline />
               </n-icon>
               <n-text strong style="font-size: 14px">发票重命名</n-text>
               <n-text depth="3" style="text-align: center; font-size: 13px">
@@ -35,7 +35,7 @@
           >
             <n-space vertical align="center">
               <n-icon size="48" color="#67C23A">
-                <BarChartOutline />
+                <DocumentsOutline />
               </n-icon>
               <n-text strong style="font-size: 14px">发票解析</n-text>
               <n-text depth="3" style="text-align: center; font-size: 13px">
@@ -79,7 +79,7 @@
 
 <script setup lang="ts">
 import { NSpace, NCard, NText, NIcon, NGrid, NGridItem } from 'naive-ui'
-import { DocumentTextOutline, ConstructOutline, BarChartOutline } from '@vicons/ionicons5'
+import { ConstructOutline, DocumentsOutline, CreateOutline } from '@vicons/ionicons5'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

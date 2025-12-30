@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { NConfigProvider, NMessageProvider, NDialogProvider, NNotificationProvider, NGlobalStyle } from 'naive-ui'
-import AppLayout from './components/AppLayout.vue'
+import AppLayout from './components/Common/AppLayout.vue'
 import { useTheme } from './composables/useTheme'
 
 // 初始化主题，并获取主题配置
