@@ -13,6 +13,7 @@ dist-ssr/
 .idea/
 .vscode/
 .qoder/quests
+.qoder/static
 
 # 日志文件
 *.log
