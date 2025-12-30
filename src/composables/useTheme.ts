@@ -54,6 +54,13 @@ export function useTheme() {
 
     // 切换主题
     isDark.value = !isDark.value
+    
+    // 同步更新 HTML 元素的 dark 类名
+    if (isDark.value) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
 
     // 等待 Vue 完成 DOM 更新
     await nextTick()
@@ -74,8 +81,14 @@ export function useTheme() {
         STORAGE_KEY,
         JSON.stringify({ isDark: newVal })
       )
+      // 同步更新 HTML 元素的 dark 类名
+      if (newVal) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
     }
-  })
+  }, { immediate: true }) // 立即执行一次，确保初始化时也设置类名
 
   return {
     isDark,

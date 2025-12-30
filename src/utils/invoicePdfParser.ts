@@ -313,9 +313,13 @@ function extractInvoiceTypeWithCoord(pages: ReconstructedPage[]): string | undef
     if (line.y >= headerThreshold) {
       const lineText = line.items.map(item => item.str).join('')
       
+      // 优先匹配专票
       if (/增值税专用发票/.test(lineText)) return '专票'
-      if (/增值税普通发票/.test(lineText) && !/电子/.test(lineText)) return '普票'
-      if (/电子普通发票/.test(lineText)) return '电子普通发票'
+      
+      // 匹配普通发票（包括增值税普通发票和电子普通发票）
+      if (/普通发票/.test(lineText) || (/电子(普通)?发票/.test(lineText) && /普通/.test(lineText))) {
+        return '普票'
+      }
     }
   }
   
@@ -522,9 +526,13 @@ function extractInvoiceNumberFallback(text: string): string | undefined {
 }
 
 function extractInvoiceTypeFallback(text: string): string | undefined {
+  // 优先匹配专票
   if (/增值税专用发票/.test(text) || /专票/.test(text)) return '专票'
-  if (/增值税普通发票/.test(text) || /普票/.test(text)) return '普票'
-  if (/电子普通发票/.test(text)) return '电子普通发票'
+  
+  // 匹配普通发票（包括增值税普通发票和电子普通发票）
+  if (/普通发票/.test(text) || /普票/.test(text) || (/电子(普通)?发票/.test(text) && /普通/.test(text))) {
+    return '普票'
+  }
   
   // 通过发票代码判断
   const invoiceCodeMatch = text.match(/发票代码[：:]*\s*(\d{10,12})/)

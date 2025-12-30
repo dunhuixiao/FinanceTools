@@ -1,18 +1,18 @@
 <template>
   <div class="page-container">
+    <!-- 上传区域 -->
     <n-space vertical size="large">
-      <!-- 文件上传卡片 -->
       <n-card title="上传发票文件" size="small">
         <file-uploader-batch
           accept="application/pdf,.pdf"
           :disabled="store.isProcessing"
-          description="支持PDF格式,单个文件不超过10MB"
+          description="支持 PDF 格式的发票文件，单个文件不超过 10MB，最多 100 个文件"
           @upload="handleUpload"
         />
       </n-card>
 
       <!-- 解析结果卡片 -->
-      <n-card title="解析结果" size="small" v-if="store.totalCount > 0">
+      <n-card title="" size="small" v-if="store.totalCount > 0">
         <!-- 操作栏 -->
         <n-space justify="space-between" align="center" style="margin-bottom: 16px">
           <n-space>
@@ -98,25 +98,13 @@
   </div>
 
   <!-- 处理进度对话框 -->
-    <n-modal
-      v-model:show="showProgressModal"
-      :mask-closable="false"
-      preset="card"
-      title="解析文件中..."
-      style="width: 400px"
-    >
-      <n-space vertical>
-        <n-progress
-          type="line"
-          :percentage="parseProgress"
-          :indicator-placement="'inside'"
-        />
-        <n-text>正在解析: {{ parseProgress }}%</n-text>
-        <n-text depth="3" style="font-size: 12px" v-if="currentFile">
-          当前文件: {{ currentFile }}
-        </n-text>
-      </n-space>
-    </n-modal>
+  <progress-modal
+    v-model:show="showProgressModal"
+    :percentage="parseProgress"
+    :current-file="currentFile"
+    title="解析文件中..."
+    mode="parse"
+  />
 </template>
 
 <script setup lang="ts">
@@ -130,8 +118,6 @@ import {
   NInput,
   NIcon,
   NText,
-  NModal,
-  NProgress,
   NDropdown,
   useMessage,
   useDialog
@@ -139,6 +125,7 @@ import {
 import { SearchOutline, DocumentTextOutline, ChevronDownOutline } from '@vicons/ionicons5'
 import FileUploaderBatch from '../components/Upload/FileUploaderBatch.vue'
 import InvoiceParsingTable from '../components/Invoice/InvoiceParsingTable.vue'
+import ProgressModal from '../components/Common/ProgressModal.vue'
 import { useInvoiceParsingStore } from '../stores/invoiceParsing'
 import { useInvoicePdfParser } from '../composables/useInvoicePdfParser'
 import { useDataExport } from '../composables/useDataExport'

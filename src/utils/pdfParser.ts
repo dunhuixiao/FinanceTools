@@ -84,13 +84,19 @@ export function extractInvoiceDataFromText(text: string): InvoiceData {
       console.log('[发票解析] 原始文本:', text)
     }
     
-    // 提取发票类型(文档开头的标题)
-    const invoiceTypeMatch = text.match(/电子发票[（(]([^)）]+)[)）]/)
-    if (invoiceTypeMatch) {
-      data.invoiceType = invoiceTypeMatch[1]
-      if (isDev) console.log('[发票解析] 发票类型:', data.invoiceType)
-    } else if (isDev) {
-      console.warn('[发票解析] 未找到发票类型')
+    // 提取发票类型（与发票解析模块保持一致）
+    // 优先匹配增值税专用发票
+    if (/增值税专用发票/.test(text)) {
+      data.invoiceType = '专票'
+      console.log('[发票解析] 发票类型: 专票')
+    }
+    // 匹配普通发票（包含增值税普通发票和电子普通发票）
+    else if (/普通发票/.test(text) || (/电子(普通)?发票/.test(text) && /普通/.test(text))) {
+      data.invoiceType = '普票'
+      console.log('[发票解析] 发票类型: 普票')
+    }
+    else {
+      console.warn('[发票解析] 未找到发票类型，文本预览:', text.substring(0, 200))
     }
     
     // 提取发票号码(独立的数字序列)

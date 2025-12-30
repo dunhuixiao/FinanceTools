@@ -1,10 +1,10 @@
 <template>
   <div class="page-container">
     <!-- 上传区域 -->
-    <n-space vertical :size="24">
+    <n-space vertical size="large">
       <n-card title="上传发票文件" size="small">
         <FileUploaderBatch
-          accept=".pdf"
+          accept="application/pdf,.pdf"
           :disabled="store.isProcessing"
           description="支持 PDF 格式的发票文件，单个文件不超过 10MB，最多 100 个文件"
           @upload="handleFileUpload"
@@ -13,19 +13,57 @@
 
       <!-- 操作栏和数据表格 -->
       <n-card v-if="store.totalCount > 0" size="small">
-        <OperationBar
-          v-model:filter-status="store.filterStatus"
-          v-model:search-keyword="store.searchKeyword"
-          :total-count="store.totalCount"
-          :success-count="store.successCount"
-          :failed-count="store.failedCount"
-          :selected-count="store.selectedIds.length"
-          :is-exporting="isExporting"
-          @select-all="store.selectAll"
-          @clear-selection="store.clearSelection"
-          @delete-selected="handleDeleteSelected"
-          @export="handleExport"
-        />
+        <!-- 操作栏 -->
+        <n-space justify="space-between" align="center" style="margin-bottom: 16px">
+          <n-space>
+            <n-radio-group v-model:value="store.filterStatus">
+              <n-radio-button value="all">
+                全部 ({{ store.totalCount }})
+              </n-radio-button>
+              <n-radio-button value="success">
+                成功 ({{ store.successCount }})
+              </n-radio-button>
+              <n-radio-button value="failed">
+                失败 ({{ store.failedCount }})
+              </n-radio-button>
+            </n-radio-group>
+            
+            <n-input
+              v-model:value="store.searchKeyword"
+              placeholder="搜索文件名..."
+              clearable
+              style="width: 200px"
+            >
+              <template #prefix>
+                <n-icon><SearchOutline /></n-icon>
+              </template>
+            </n-input>
+          </n-space>
+          
+          <n-space>
+            <n-button @click="store.selectAll" :disabled="store.totalCount === 0">
+              全选
+            </n-button>
+            <n-button @click="store.clearSelection" :disabled="store.selectedIds.length === 0">
+              取消选择
+            </n-button>
+            <n-button
+              type="error"
+              @click="handleDeleteSelected"
+              :disabled="store.selectedIds.length === 0"
+            >
+              删除选中 ({{ store.selectedIds.length }})
+            </n-button>
+            <n-button
+              type="primary"
+              @click="handleExport"
+              :disabled="store.successCount === 0"
+              :loading="isExporting"
+            >
+              导出成功的文件
+            </n-button>
+          </n-space>
+        </n-space>
 
         <div class="table-scroll-container">
           <InvoiceTable
@@ -49,22 +87,13 @@
     </n-space>
 
     <!-- 处理进度对话框 -->
-    <n-modal
-      v-model:show="showProgressModal"
-      :mask-closable="false"
-      preset="card"
-      title="处理文件中..."
-      style="width: 400px"
-    >
-      <n-space vertical>
-        <n-progress
-          type="line"
-          :percentage="parseProgress"
-          :indicator-placement="'inside'"
-        />
-        <n-text>正在解析文件 {{ parseProgress }}%</n-text>
-      </n-space>
-    </n-modal>
+    <progress-modal
+    v-model:show="showProgressModal"
+    :percentage="parseProgress"
+    :current-file="currentFile"
+    title="解析文件中..."
+    mode="parse"
+  />
   </div>
 </template>
 
@@ -75,19 +104,21 @@ import {
   NSpace,
   NCard,
   NIcon,
-  NModal,
-  NProgress,
+  NRadioGroup,
+  NRadioButton,
+  NInput,
+  NButton,
   useMessage,
   useDialog
 } from 'naive-ui'
-import { DocumentTextOutline } from '@vicons/ionicons5'
+import { DocumentTextOutline, SearchOutline } from '@vicons/ionicons5'
 import { useInvoiceStore } from '@/stores/invoice'
 import { useFileParser } from '@/composables/useFileParser'
 import { useFileExport } from '@/composables/useFileExport'
 import { validateFile } from '@/utils/fileValidator'
 import FileUploaderBatch from '@/components/Upload/FileUploaderBatch.vue'
-import OperationBar from '@/components/Common/OperationBar.vue'
 import InvoiceTable from '@/components/Invoice/InvoiceTable.vue'
+import ProgressModal from '@/components/Common/ProgressModal.vue'
 
 const store = useInvoiceStore()
 const message = useMessage()
@@ -97,6 +128,7 @@ const { isExporting, exportAsZip } = useFileExport()
 
 const showProgressModal = ref(false)
 const parseProgress = ref(0)
+const currentFile = ref('')
 const uploadQueue = ref<File[]>([])
 
 /**
@@ -159,6 +191,9 @@ async function processUploadQueue() {
 
   for (const file of files) {
     try {
+      // 更新当前处理的文件名
+      currentFile.value = file.name
+      
       // 解析文件
       const result = await parseFile(file)
 
@@ -176,6 +211,7 @@ async function processUploadQueue() {
   store.isProcessing = false
   showProgressModal.value = false
   parseProgress.value = 0
+  currentFile.value = ''
 
   message.success(`成功处理 ${processed} 个文件`)
 }

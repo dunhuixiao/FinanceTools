@@ -144,7 +144,9 @@ export const useInvoiceStore = defineStore('invoice', (): InvoiceStore => {
       errorMessage
     }
     
-    if (isDev) console.log('[Store] 数据项:', invoiceItem)
+    console.log('[Store] 数据项:', invoiceItem)
+    console.log('[Store] 发票类型值:', invoiceItem.invoiceType, '（类型:', typeof invoiceItem.invoiceType, '）')
+    if (isDev) console.log('[Store] 完整数据:', invoiceItem)
     
     fileList.value.push(invoiceItem)
     return invoiceItem

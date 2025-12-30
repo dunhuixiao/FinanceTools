@@ -40,11 +40,10 @@ function formatAmount(amount: string | undefined): string {
   return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// 发票类型标签配置
+// 发票类型标签配置（电子普通发票也归类为普票）
 const typeTagConfig: Record<string, { bg: string, color: string }> = {
   '专票': { bg: '#DBEAFE', color: '#1E40AF' },
-  '普票': { bg: '#D1FAE5', color: '#065F46' },
-  '电子普通发票': { bg: '#F3F4F6', color: '#374151' }
+  '普票': { bg: '#D1FAE5', color: '#065F46' }
 }
 
 const baseColumns: DataTableColumns<InvoiceParseResult> = [
@@ -104,9 +103,9 @@ const baseColumns: DataTableColumns<InvoiceParseResult> = [
       if (!row.amount) {
         return h('span', { style: 'color: #9CA3AF; font-size: 12px;' }, '-')
       }
-      return h('div', { style: 'font-variant-numeric: tabular-nums; color: #4B5563;' }, [
-        h('span', { style: 'font-size: 0.9em; color: #9CA3AF; margin-right: 2px;' }, '¥'),
-        formatAmount(row.amount)
+      return h('div', { style: 'font-family: monospace; font-variant-numeric: tabular-nums; text-align: right;' }, [
+        h('span', { style: 'font-size: 0.9em; color: var(--n-text-color-disabled); margin-right: 2px;' }, '¥'),
+        h('span', { style: 'color: var(--amount-color);' }, formatAmount(row.amount))
       ])
     }
   },
@@ -119,9 +118,9 @@ const baseColumns: DataTableColumns<InvoiceParseResult> = [
       if (!row.taxAmount) {
         return h('span', { style: 'color: #9CA3AF; font-size: 12px;' }, '-')
       }
-      return h('div', { style: 'font-variant-numeric: tabular-nums; color: #4B5563;' }, [
-        h('span', { style: 'font-size: 0.9em; color: #9CA3AF; margin-right: 2px;' }, '¥'),
-        formatAmount(row.taxAmount)
+      return h('div', { style: 'font-family: monospace; font-variant-numeric: tabular-nums; text-align: right;' }, [
+        h('span', { style: 'font-size: 0.9em; color: var(--n-text-color-disabled); margin-right: 2px;' }, '¥'),
+        h('span', { style: 'color: var(--tax-amount-color);' }, formatAmount(row.taxAmount))
       ])
     }
   },
@@ -134,9 +133,9 @@ const baseColumns: DataTableColumns<InvoiceParseResult> = [
       if (!row.totalAmount) {
         return h('span', { style: 'color: #9CA3AF; font-size: 12px;' }, '-')
       }
-      return h('div', { style: 'font-variant-numeric: tabular-nums; font-weight: 600; color: #111827;' }, [
-        h('span', { style: 'font-size: 0.9em; color: #9CA3AF; margin-right: 2px; font-weight: 400;' }, '¥'),
-        formatAmount(row.totalAmount)
+      return h('div', { style: 'font-family: monospace; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600;' }, [
+        h('span', { style: 'font-size: 0.9em; color: var(--n-text-color-disabled); margin-right: 2px; font-weight: 400;' }, '¥'),
+        h('span', { style: 'color: var(--total-amount-color);' }, formatAmount(row.totalAmount))
       ])
     }
   }
@@ -223,39 +222,57 @@ function handleCheck(keys: RowKey[]) {
 <style scoped>
 /* 表格整体样式优化 */
 .invoice-parsing-table {
-  /* 去掉外边框 */
   border: none;
+}
+
+/* 自定义CSS变量 - 灰度层次设计（专业风格） */
+.invoice-parsing-table {
+  --amount-color: #374151; /* 浅色模式: gray-700 (次要信息) */
+  --tax-amount-color: #6B7280; /* 浅色模式: gray-500 (三级信息) */
+  --total-amount-color: #111827; /* 浅色模式: gray-900 (主要信息，最高对比度) */
+}
+
+/* 深色模式下的金额颜色 - 修复可见性问题 */
+html.dark .invoice-parsing-table {
+  --amount-color: #E5E7EB; /* 深色模式: gray-200 (高可见性) */
+  --tax-amount-color: #9CA3AF; /* 深色模式: gray-400 (可见但微妙) */
+  --total-amount-color: #FFFFFF; /* 深色模式: white (纯白突出显示) */
 }
 
 /* 表头样式 */
 .invoice-parsing-table :deep(.n-data-table-th) {
-  background-color: #F9FAFB !important;
-  border-bottom: 2px solid #E5E7EB !important;
+  background-color: var(--n-th-color) !important;
+  border-bottom: 2px solid var(--n-border-color) !important;
   padding: 1rem 0.75rem !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
-  color: #6B7280 !important;
+  color: var(--n-th-text-color) !important;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  border-right: none !important;
 }
 
 /* 表格行样式 */
 .invoice-parsing-table :deep(.n-data-table-td) {
   padding: 1rem 0.75rem !important;
-  border-bottom: 1px solid #F3F4F6 !important;
-  /* 去掉纵向分割线 */
+  border-bottom: 1px solid var(--n-border-color) !important;
   border-right: none !important;
 }
 
-/* 表头去掉纵向分割线 */
-.invoice-parsing-table :deep(.n-data-table-th) {
-  border-right: none !important;
-}
-
-/* Hover效果 */
+/* Hover效果 - 支持深色模式 */
 .invoice-parsing-table :deep(.n-data-table-tr:hover .n-data-table-td) {
-  background-color: #F3F4F6 !important;
+  background-color: var(--n-td-color-hover) !important;
   transition: background-color 0.2s;
+}
+
+/* 选中行样式 - 支持深色模式 */
+.invoice-parsing-table :deep(.n-data-table-tr.n-data-table-tr--selected .n-data-table-td) {
+  background-color: var(--n-td-color-checked) !important;
+}
+
+/* 选中行的Hover样式 */
+.invoice-parsing-table :deep(.n-data-table-tr.n-data-table-tr--selected:hover .n-data-table-td) {
+  background-color: var(--n-td-color-checked-hover) !important;
 }
 
 /* 响应式设计 */
