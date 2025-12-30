@@ -66,7 +66,7 @@
         </n-space>
 
         <div class="table-scroll-container">
-          <InvoiceTable
+          <InvoiceRenameTable
             :data="store.filteredList"
             v-model:selected-ids="store.selectedIds"
             @edit="handleEdit"
@@ -117,7 +117,7 @@ import { useFileParser } from '@/composables/useFileParser'
 import { useFileExport } from '@/composables/useFileExport'
 import { validateFile } from '@/utils/fileValidator'
 import FileUploaderBatch from '@/components/Upload/FileUploaderBatch.vue'
-import InvoiceTable from '@/components/Invoice/InvoiceTable.vue'
+import InvoiceRenameTable from '@/components/Invoice/InvoiceRenameTable.vue'
 import ProgressModal from '@/components/Common/ProgressModal.vue'
 
 const store = useInvoiceStore()

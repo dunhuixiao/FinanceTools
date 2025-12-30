@@ -60,13 +60,13 @@ const columns: DataTableColumns<InvoiceRow> = [
     width: 120,
     align: 'center',
     render: (row: InvoiceRow) => {
-      console.log('[InvoiceTable] 渲染发票类型:', row.invoiceType, '（类型:', typeof row.invoiceType, '）')
+      console.log('[InvoiceRenameTable] 渲染发票类型:', row.invoiceType, '（类型:', typeof row.invoiceType, '）')
       if (!row.invoiceType) {
-        console.log('[InvoiceTable] 发票类型为空')
+        console.log('[InvoiceRenameTable] 发票类型为空')
         return h('span', { style: 'color: #9CA3AF; font-size: 12px;' }, '-')
       }
       const config = typeTagConfig[row.invoiceType] || { bg: '#FEF3C7', color: '#92400E' }
-      console.log('[InvoiceTable] 使用配置:', config, '（发票类型:', row.invoiceType, '）')
+      console.log('[InvoiceRenameTable] 使用配置:', config, '（发票类型:', row.invoiceType, '）')
       return h('span', {
         style: `
           background-color: ${config.bg};
