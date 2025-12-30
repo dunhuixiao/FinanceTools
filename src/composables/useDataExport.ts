@@ -18,7 +18,7 @@ export interface ExportResult {
   error?: string
 }
 
-// JSON格式化后的发票数据（移除不可序列化字段）
+// JSON格式化后的发票数据（移除不可序列化字段和状态信息）
 export interface InvoiceJSONFormat {
   id: string
   fileName: string
@@ -28,8 +28,6 @@ export interface InvoiceJSONFormat {
   taxAmount?: string
   totalAmount?: string
   taxRates?: Array<{ rate: string; amount?: string; index: number }>
-  status: string
-  errorMessage?: string
   parseTime: string
 }
 
@@ -83,9 +81,7 @@ export function useDataExport() {
         { wch: 15 },  // 金额
         { wch: 15 },  // 税额
         { wch: 15 },  // 价税合计
-        ...Array(maxTaxRateCount).fill({ wch: 12 }), // 税率列
-        { wch: 10 },  // 状态
-        { wch: 30 }   // 失败原因
+        ...Array(maxTaxRateCount).fill({ wch: 12 })  // 税率列
       ]
       
       // 创建工作簿
@@ -227,8 +223,6 @@ function generateExcelHeaders(maxTaxRateCount: number): string[] {
     headers.push(`税率${i}`)
   }
   
-  headers.push('状态', '失败原因')
-  
   return headers
 }
 
@@ -259,21 +253,12 @@ function transformDataForExcel(
       }
     }
     
-    // 添加状态和失败原因
-    const statusMap: Record<string, string> = {
-      success: '成功',
-      failed: '失败',
-      pending: '待处理'
-    }
-    row.push(statusMap[item.status] || '未知')
-    row.push(item.errorMessage || '-')
-    
     return row
   })
 }
 
 /**
- * 将数据转换为JSON格式（移除不可序列化字段）
+ * 将数据转换为JSON格式（移除不可序列化字段和状态信息）
  */
 function transformDataForJSON(data: InvoiceParseResult[]): InvoiceJSONFormat[] {
   return data.map(item => ({
@@ -285,10 +270,8 @@ function transformDataForJSON(data: InvoiceParseResult[]): InvoiceJSONFormat[] {
     taxAmount: item.taxAmount,
     totalAmount: item.totalAmount,
     taxRates: item.taxRates,
-    status: item.status,
-    errorMessage: item.errorMessage,
     parseTime: item.parseTime
-    // 不包含 originalFile 字段
+    // 不包含 originalFile、status、errorMessage 字段
   }))
 }
 
