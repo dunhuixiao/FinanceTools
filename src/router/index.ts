@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import HomePage from '../views/HomePage.vue'
 import InvoiceRename from '../views/InvoiceRename.vue'
 import InvoiceParsing from '../views/InvoiceParsing.vue'
+import InvoiceContent from '../views/InvoiceContent.vue'
 import NotFound from '../components/Common/NotFound.vue'
 
 const routes: RouteRecordRaw[] = [
@@ -22,6 +23,12 @@ const routes: RouteRecordRaw[] = [
     name: 'invoice-parsing',
     component: InvoiceParsing,
     meta: { title: '发票解析' }
+  },
+  {
+    path: '/invoice-content',
+    name: 'invoice-content',
+    component: InvoiceContent,
+    meta: { title: '发票内容解析' }
   },
   {
     path: '/:pathMatch(.*)*',

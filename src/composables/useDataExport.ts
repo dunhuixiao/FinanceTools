@@ -6,6 +6,7 @@ import { ref } from 'vue'
 import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 import { InvoiceParseResult } from '../stores/invoiceParsing'
+import type { InvoiceContentItem } from '../types/invoiceContent'
 
 // 判断是否为开发环境
 const isDev = import.meta.env.DEV
@@ -287,4 +288,129 @@ function formatTimestamp(date: Date): string {
   const seconds = String(date.getSeconds()).padStart(2, '0')
   
   return `${year}${month}${day}_${hours}${minutes}${seconds}`
+}
+
+/**
+ * 发票内容导出Composable
+ * 专门用于导出发票项目明细行
+ */
+export function useContentExport() {
+  const isExporting = ref(false)
+  
+  /**
+   * 导出发票内容项目行为Excel
+   */
+  async function exportInvoiceContent(
+    items: InvoiceContentItem[],
+    filename: string = '发票内容明细'
+  ): Promise<ExportResult> {
+    const startTime = isDev ? performance.now() : 0
+    
+    if (isDev) {
+      console.log('[数据导出] 开始导出发票内容:', items.length, '条记录')
+    }
+    
+    isExporting.value = true
+    
+    try {
+      if (items.length === 0) {
+        throw new Error('没有可导出的数据')
+      }
+      
+      // 生成表头
+      const headers = [
+        '序号',
+        '文件名',
+        '发票号码',
+        '发票日期',
+        '发票类型',
+        '货物或服务名称',
+        '规格型号',
+        '单位',
+        '数量',
+        '单价',
+        '金额',
+        '税率/征收率',
+        '税额'
+      ]
+      
+      // 转换数据为二维数组
+      const rows = items.map((item, index) => [
+        index + 1,
+        item.sourceFileName,
+        item.sourceInvoiceNumber || '-',
+        item.sourceInvoiceDate || '-',
+        item.sourceInvoiceType || '-',
+        item.goodsName || '-',
+        item.specification || '-',
+        item.unit || '-',
+        item.quantity || '-',
+        item.unitPrice || '-',
+        item.amount || '-',
+        item.taxRate || '-',
+        item.taxAmount || '-'
+      ])
+      
+      // 创建工作表
+      const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows])
+      
+      // 设置列宽
+      worksheet['!cols'] = [
+        { wch: 8 },   // 序号
+        { wch: 30 },  // 文件名
+        { wch: 22 },  // 发票号码
+        { wch: 12 },  // 发票日期
+        { wch: 10 },  // 发票类型
+        { wch: 30 },  // 货物或服务名称
+        { wch: 15 },  // 规格型号
+        { wch: 8 },   // 单位
+        { wch: 12 },  // 数量
+        { wch: 15 },  // 单价
+        { wch: 15 },  // 金额
+        { wch: 12 },  // 税率/征收率
+        { wch: 15 }   // 税额
+      ]
+      
+      // 创建工作簿
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, '发票内容明细')
+      
+      // 生成Excel文件
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      
+      // 生成文件名（带时间戳）
+      const timestamp = formatTimestamp(new Date())
+      const fullFilename = `${filename}_${timestamp}.xlsx`
+      
+      // 触发下载
+      saveAs(blob, fullFilename)
+      
+      if (isDev) {
+        const endTime = performance.now()
+        console.log(`[性能] 内容导出: ${items.length}条记录, 耗时: ${((endTime - startTime) / 1000).toFixed(2)}s`)
+      } else {
+        console.log('[数据导出] 发票内容导出完成')
+      }
+      
+      return {
+        success: true,
+        recordCount: items.length,
+        fileName: fullFilename
+      }
+    } catch (error) {
+      console.error('[数据导出] 发票内容导出失败:', (error as Error).message)
+      return {
+        success: false,
+        error: (error as Error).message
+      }
+    } finally {
+      isExporting.value = false
+    }
+  }
+  
+  return {
+    isExporting,
+    exportInvoiceContent
+  }
 }

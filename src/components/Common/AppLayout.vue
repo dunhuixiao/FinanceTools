@@ -147,6 +147,7 @@ const activeKey = computed(() => {
   if (path === '/' || path === '/home') return 'home'
   if (path === '/invoice-rename') return 'invoice-rename'
   if (path === '/invoice-parsing') return 'invoice-parsing'
+  if (path === '/invoice-content') return 'invoice-content'
   return 'home'
 })
 
@@ -168,6 +169,10 @@ const menuOptions = [
       {
         label: '📋 发票解析',
         key: 'invoice-parsing'
+      },
+      {
+        label: '📊 发票内容解析',
+        key: 'invoice-content'
       }
     ]
   }
@@ -238,6 +243,8 @@ function handleMenuSelect(key: string) {
     router.push('/invoice-rename')
   } else if (key === 'invoice-parsing') {
     router.push('/invoice-parsing')
+  } else if (key === 'invoice-content') {
+    router.push('/invoice-content')
   }
 }
 
