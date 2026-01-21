@@ -64,6 +64,24 @@
         </n-grid-item>
 
         <n-grid-item>
+          <n-card
+            hoverable
+            class="tool-card"
+            @click="handleToolClick('invoice-content-xml')"
+          >
+            <n-space vertical align="center">
+              <n-icon size="48" color="#F56C6C">
+                <CodeOutline />
+              </n-icon>
+              <n-text strong style="font-size: 14px">发票内容解析(XML)</n-text>
+              <n-text depth="3" style="text-align: center; font-size: 13px">
+                解析XML电子发票，提取项目明细
+              </n-text>
+            </n-space>
+          </n-card>
+        </n-grid-item>
+
+        <n-grid-item>
           <n-card class="tool-card-disabled">
             <n-space vertical align="center">
               <n-icon size="48" color="#dcdfe6">
@@ -83,7 +101,7 @@
 
 <script setup lang="ts">
 import { NSpace, NCard, NText, NIcon, NGrid, NGridItem } from 'naive-ui'
-import { ConstructOutline, DocumentsOutline, CreateOutline, ListOutline } from '@vicons/ionicons5'
+import { ConstructOutline, DocumentsOutline, CreateOutline, ListOutline, CodeOutline } from '@vicons/ionicons5'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

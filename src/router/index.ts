@@ -3,6 +3,7 @@ import HomePage from '../views/HomePage.vue'
 import InvoiceRename from '../views/InvoiceRename.vue'
 import InvoiceParsing from '../views/InvoiceParsing.vue'
 import InvoiceContent from '../views/InvoiceContent.vue'
+import InvoiceContentXML from '../views/InvoiceContentXML.vue'
 import NotFound from '../components/Common/NotFound.vue'
 
 const routes: RouteRecordRaw[] = [
@@ -29,6 +30,12 @@ const routes: RouteRecordRaw[] = [
     name: 'invoice-content',
     component: InvoiceContent,
     meta: { title: '发票内容解析' }
+  },
+  {
+    path: '/invoice-content-xml',
+    name: 'invoice-content-xml',
+    component: InvoiceContentXML,
+    meta: { title: '发票内容解析(XML)' }
   },
   {
     path: '/:pathMatch(.*)*',
