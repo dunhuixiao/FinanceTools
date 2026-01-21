@@ -150,14 +150,14 @@ const exportOptions = [
     label: '导出本页',
     key: 'current',
     props: {
-      style: 'padding: 8px 16px;'
+      style: 'padding: 8px 24px; text-align: center; display: flex; justify-content: center; align-items: center;'
     }
   },
   {
     label: '导出全部',
     key: 'all',
     props: {
-      style: 'padding: 8px 16px;'
+      style: 'padding: 8px 24px; text-align: center; display: flex; justify-content: center; align-items: center;'
     }
   }
 ]
@@ -289,16 +289,14 @@ function handleClearAll() {
  */
 async function handleExportSelect(key: string) {
   let dataToExport
-  let exportLabel
+  const isFullExport = key === 'all'
   
   if (key === 'current') {
     // 导出本页：使用筛选后的数据
     dataToExport = store.filteredList
-    exportLabel = '当前筛选'
   } else {
     // 导出全部：使用所有数据
     dataToExport = store.itemList
-    exportLabel = '全部'
   }
   
   if (dataToExport.length === 0) {
@@ -306,14 +304,16 @@ async function handleExportSelect(key: string) {
     return
   }
   
+  // 显示导出中提示
+  message.info('正在导出，成功后会立刻下载')
+  
   try {
-    const result = await exportInvoiceContent(dataToExport, '发票内容明细')
+    const result = await exportInvoiceContent(dataToExport, '发票内容明细', isFullExport)
     
-    if (result.success) {
-      message.success(`导出成功！共 ${result.recordCount} 条${exportLabel}记录`)
-    } else {
+    if (!result.success) {
       message.error(`导出失败：${result.error}`)
     }
+    // 导出成功时不再显示额外提示，文件会自动下载
   } catch (error) {
     console.error('导出错误:', error)
     message.error(`导出失败：${(error as Error).message}`)

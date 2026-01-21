@@ -299,10 +299,14 @@ export function useContentExport() {
   
   /**
    * 导出发票内容项目行为Excel
+   * @param items - 要导出的数据项
+   * @param filename - 文件名前缀
+   * @param isFullExport - 是否为全部导出模式（用于文件名标识）
    */
   async function exportInvoiceContent(
     items: InvoiceContentItem[],
-    filename: string = '发票内容明细'
+    filename: string = '发票内容明细',
+    isFullExport: boolean = false
   ): Promise<ExportResult> {
     const startTime = isDev ? performance.now() : 0
     
@@ -379,9 +383,10 @@ export function useContentExport() {
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
       const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
       
-      // 生成文件名（带时间戳）
+      // 生成文件名（带时间戳，全部导出模式添加标识）
       const timestamp = formatTimestamp(new Date())
-      const fullFilename = `${filename}_${timestamp}.xlsx`
+      const exportSuffix = isFullExport ? '_全部导出' : ''
+      const fullFilename = `${filename}${exportSuffix}_${timestamp}.xlsx`
       
       // 触发下载
       saveAs(blob, fullFilename)
