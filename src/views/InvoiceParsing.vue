@@ -275,7 +275,7 @@ async function handleExportSelect(key: string) {
   }
   
   try {
-    const result = await exportData(dataToExport, format, '发票解析结果')
+    const result = await exportData(dataToExport, format, '发票号码解析结果')
     
     if (result.success) {
       message.success(`导出成功！共 ${result.recordCount} 条记录`)

@@ -359,7 +359,7 @@ function createMergedItem(items: PDFTextItem[]): MergedTextItem {
  * 基于已检测到的列推断缺失列的位置
  * 列的标准顺序: goodsName -> specification -> unit -> quantity -> unitPrice -> amount -> taxRate -> taxAmount
  */
-function inferMissingColumns(mapping: ColumnMapping, mergedItems: MergedTextItem[]): void {
+function inferMissingColumns(mapping: ColumnMapping, _mergedItems: MergedTextItem[]): void {
   // 获取所有已检测到的列的X坐标，按从左到右排序
   const detectedColumns: { field: string; x: number; width: number }[] = []
   for (const [field, col] of Object.entries(mapping)) {
@@ -591,25 +591,26 @@ function findTableFooterLine(page: ReconstructedPage): ReconstructedLine | null 
 
 /**
  * 从表头行检测列映射
- * 使用文本块合并策略，解决"规格型号"被拆分的问题
+ * 直接使用原始文本项匹配列关键词，避免合并导致的位置偏差
  */
 function detectColumnMapping(headerLine: ReconstructedLine): ColumnMapping {
   const mapping: ColumnMapping = {}
   
-  // Step 1: 合并相邻文本块
-  const mergedItems = mergeAdjacentTextItems(headerLine)
+  // Step 1: 过滤掉纯空格的文本项
+  const nonSpaceItems = headerLine.items.filter(item => item.str.trim().length > 0)
   
   if (isDev) {
-    console.log('[内容解析] 表头合并文本块:', mergedItems.map(m => ({
-      text: m.text,
-      x: Math.round(m.x),
-      width: Math.round(m.width)
+    console.log('[内容解析] 表头非空文本项:', nonSpaceItems.map(item => ({
+      text: item.str,
+      x: Math.round(item.x),
+      width: Math.round(item.width)
     })))
   }
   
-  // Step 2: 对每个合并后的文本块进行关键词匹配
-  for (const mergedItem of mergedItems) {
-    const text = mergedItem.text.replace(/\s+/g, '')  // 移除空格便于匹配
+  // Step 2: 直接使用非空文本项匹配列关键词
+  for (const item of nonSpaceItems) {
+    const text = item.str.replace(/\s+/g, '')  // 移除空格便于匹配
+    const centerX = item.x + item.width / 2
     
     for (const [field, keywords] of Object.entries(COLUMN_KEYWORDS)) {
       // 如果该字段已匹配，跳过
@@ -619,11 +620,11 @@ function detectColumnMapping(headerLine: ReconstructedLine): ColumnMapping {
         const normalizedKeyword = keyword.replace(/\s+/g, '')  // 同样移除关键词中的空格
         if (text.includes(normalizedKeyword)) {
           (mapping as any)[field] = {
-            x: mergedItem.x + mergedItem.width / 2,  // 使用合并后的中心点
-            width: mergedItem.width
+            x: centerX,
+            width: item.width
           }
           if (isDev) {
-            console.log(`[内容解析] 匹配列 ${field}: "${keyword}" -> x=${Math.round(mergedItem.x + mergedItem.width / 2)}`)
+            console.log(`[内容解析] 匹配列 ${field}: "${text}" -> x=${Math.round(centerX)}`)
           }
           break
         }
@@ -631,7 +632,69 @@ function detectColumnMapping(headerLine: ReconstructedLine): ColumnMapping {
     }
   }
   
-  // Step 3: 相对位置推断（当某列未检测到时）
+  // Step 3: 特殊处理：税率/征收率 可能是拆分的两个文本项
+  if (!mapping.taxRate) {
+    for (let i = 0; i < nonSpaceItems.length; i++) {
+      const item = nonSpaceItems[i]
+      if (item.str.includes('税率') || item.str.includes('征收率')) {
+        // 查找相邻的"/征收率"
+        let combinedWidth = item.width
+        const combinedX = item.x
+        if (i + 1 < nonSpaceItems.length && nonSpaceItems[i + 1].str.includes('征收率')) {
+          combinedWidth = nonSpaceItems[i + 1].x + nonSpaceItems[i + 1].width - item.x
+        }
+        mapping.taxRate = {
+          x: combinedX + combinedWidth / 2,
+          width: combinedWidth
+        }
+        if (isDev) {
+          console.log(`[内容解析] 匹配列 taxRate (特殊): x=${Math.round(mapping.taxRate.x)}`)
+        }
+        break
+      }
+    }
+  }
+  
+  // Step 3.5: 特殊处理：分隔的两字符列名（如"单 位"、"数 量"、"单 价"、"金 额"）
+  const twoCharColumns: Array<{ field: keyof ColumnMapping; chars: [string, string] }> = [
+    { field: 'unit', chars: ['单', '位'] },
+    { field: 'quantity', chars: ['数', '量'] },
+    { field: 'unitPrice', chars: ['单', '价'] },
+    { field: 'amount', chars: ['金', '额'] },
+    { field: 'taxAmount', chars: ['税', '额'] }
+  ]
+  
+  for (const { field, chars } of twoCharColumns) {
+    if (mapping[field]) continue
+    
+    // 查找第一个字符
+    for (let i = 0; i < nonSpaceItems.length; i++) {
+      const item = nonSpaceItems[i]
+      if (item.str.trim() === chars[0]) {
+        // 在后续10个文本项中查找第二个字符
+        for (let j = i + 1; j < Math.min(i + 10, nonSpaceItems.length); j++) {
+          const nextItem = nonSpaceItems[j]
+          if (nextItem.str.trim() === chars[1]) {
+            // 找到了配对，计算中心点
+            const combinedX = item.x
+            const combinedWidth = nextItem.x + nextItem.width - item.x
+            mapping[field] = {
+              x: combinedX + combinedWidth / 2,
+              width: combinedWidth
+            }
+            if (isDev) {
+              console.log(`[内容解析] 匹配列 ${field} (分隔): "${chars[0]}...${chars[1]}" -> x=${Math.round(mapping[field]!.x)}`)
+            }
+            break
+          }
+        }
+        if (mapping[field]) break
+      }
+    }
+  }
+  
+  // Step 4: 相对位置推断（当某列未检测到时）
+  const mergedItems = mergeAdjacentTextItems(headerLine)
   inferMissingColumns(mapping, mergedItems)
   
   // 输出最终列映射详情

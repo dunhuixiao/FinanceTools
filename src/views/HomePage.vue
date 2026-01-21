@@ -37,7 +37,7 @@
               <n-icon size="48" color="#67C23A">
                 <DocumentsOutline />
               </n-icon>
-              <n-text strong style="font-size: 14px">发票解析</n-text>
+              <n-text strong style="font-size: 14px">发票号码解析</n-text>
               <n-text depth="3" style="text-align: center; font-size: 13px">
                 解析PDF发票文件，提取关键信息并导出
               </n-text>

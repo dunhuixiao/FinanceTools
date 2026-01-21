@@ -22,7 +22,7 @@ const routes: RouteRecordRaw[] = [
     path: '/invoice-parsing',
     name: 'invoice-parsing',
     component: InvoiceParsing,
-    meta: { title: '发票解析' }
+    meta: { title: '发票号码解析' }
   },
   {
     path: '/invoice-content',

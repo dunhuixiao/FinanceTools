@@ -87,7 +87,7 @@ export function useDataExport() {
       
       // 创建工作簿
       const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, '发票解析结果')
+      XLSX.utils.book_append_sheet(workbook, worksheet, '发票号码解析结果')
       
       // 生成Excel文件
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
@@ -188,7 +188,7 @@ export function useDataExport() {
   async function exportData(
     data: InvoiceParseResult[],
     format: 'excel' | 'json',
-    filename: string = '发票解析结果'
+    filename: string = '发票号码解析结果'
   ): Promise<ExportResult> {
     if (format === 'excel') {
       return exportToExcel(data, filename)

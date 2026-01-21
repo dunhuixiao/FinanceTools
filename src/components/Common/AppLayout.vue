@@ -167,7 +167,7 @@ const menuOptions = [
         key: 'invoice-rename'
       },
       {
-        label: '📋 发票解析',
+        label: '📋 发票号码解析',
         key: 'invoice-parsing'
       },
       {

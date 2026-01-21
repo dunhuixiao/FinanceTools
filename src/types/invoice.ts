@@ -24,7 +24,7 @@ export interface InvoiceRow {
   errorMessage: string
 }
 
-// 发票解析结果数据结构
+// 发票号码解析结果数据结构
 export interface InvoiceParseResult {
   id: string                    // 唯一标识符（UUID）
   fileName: string              // 原始文件名

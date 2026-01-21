@@ -1,5 +1,5 @@
 /**
- * 发票解析数据状态管理
+ * 发票号码解析数据状态管理
  */
 import { defineStore } from 'pinia'
 import { ref, computed, Ref, ComputedRef } from 'vue'

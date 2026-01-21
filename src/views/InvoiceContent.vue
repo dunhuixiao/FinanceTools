@@ -54,17 +54,23 @@
             >
               清空全部
             </n-button>
-            <n-button
-              type="primary"
-              @click="handleExport"
+            <n-dropdown
+              trigger="hover"
+              :options="exportOptions"
+              @select="handleExportSelect"
               :disabled="store.totalCount === 0"
-              :loading="isExporting"
             >
-              <template #icon>
-                <n-icon><download-outline /></n-icon>
-              </template>
-              导出Excel
-            </n-button>
+              <n-button
+                type="primary"
+                :disabled="store.totalCount === 0"
+                :loading="isExporting"
+              >
+                <template #icon>
+                  <n-icon><download-outline /></n-icon>
+                </template>
+                导出Excel
+              </n-button>
+            </n-dropdown>
           </n-space>
         </n-space>
 
@@ -113,6 +119,7 @@ import {
   NIcon,
   NText,
   NTag,
+  NDropdown,
   useMessage,
   useDialog
 } from 'naive-ui'
@@ -134,6 +141,26 @@ const { exportInvoiceContent, isExporting } = useContentExport()
 const showProgressModal = ref(false)
 const parseProgress = ref(0)
 const currentFileName = ref('')
+
+/**
+ * 导出下拉菜单选项
+ */
+const exportOptions = [
+  {
+    label: '导出本页',
+    key: 'current',
+    props: {
+      style: 'padding: 8px 16px;'
+    }
+  },
+  {
+    label: '导出全部',
+    key: 'all',
+    props: {
+      style: 'padding: 8px 16px;'
+    }
+  }
+]
 
 /**
  * 处理选中项更新
@@ -258,12 +285,21 @@ function handleClearAll() {
 }
 
 /**
- * 导出Excel
+ * 处理导出选择
  */
-async function handleExport() {
-  const dataToExport = store.selectedIds.length > 0 
-    ? store.selectedItems 
-    : store.itemList
+async function handleExportSelect(key: string) {
+  let dataToExport
+  let exportLabel
+  
+  if (key === 'current') {
+    // 导出本页：使用筛选后的数据
+    dataToExport = store.filteredList
+    exportLabel = '当前筛选'
+  } else {
+    // 导出全部：使用所有数据
+    dataToExport = store.itemList
+    exportLabel = '全部'
+  }
   
   if (dataToExport.length === 0) {
     message.warning('没有可导出的数据')
@@ -274,7 +310,7 @@ async function handleExport() {
     const result = await exportInvoiceContent(dataToExport, '发票内容明细')
     
     if (result.success) {
-      message.success(`导出成功！共 ${result.recordCount} 条记录`)
+      message.success(`导出成功！共 ${result.recordCount} 条${exportLabel}记录`)
     } else {
       message.error(`导出失败：${result.error}`)
     }
